@@ -1,19 +1,42 @@
 
 library(shiny)
 library(shinydashboard)
+library(DT)
+library(dplyr)
 
-# Define UI for application that draws a histogram
+# x <- read.csv2(
+#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv", 
+#     sep=',', 
+#     header = T,
+#     encoding = "UTF-8")
+
 ui <- dashboardPage(
-    dashboardHeader(title="TREE 2 Codebook",titleWidth = 300),
-    dashboardSidebar(tags$style(HTML(".main-sidebar{width: 200px;}")),
+    dashboardHeader(title="TREE 2 Codebook"),
+    dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Overview", tabName = "home", icon = icon("house-user")),
-                         menuItem("Exploration", tabName = "exp", icon = icon("atom"))
-                     )
+                         menuItem("Exploration", tabName = "exp", icon = icon("atom")),
+                         menuItem("Help", tabName = "help", icon = icon("house-user"))
+                     ),
+                     checkboxGroupInput("data", "Data collection", 
+                                        choices = list(
+                                            "Base" = 1,
+                                            "Complementary" = 2
+                                            ),
+                                        selected = c(1,2)
+                     ),            
+                     checkboxGroupInput("wave", "Include waves", 
+                                        choices = list(
+                                            "0" = 0,
+                                            "1" = 1, 
+                                            "2" = 2
+                                        ),
+                                        selected = c(0,1,2)
+                     )            
+                     
     ),
     dashboardBody(
         tabItems(
-            tabItem(tabName = "home",
+            tabItem(tabName = "help",
                     textOutput("intro_text"),
                     br(),
                     textOutput("intro_body"),
@@ -44,7 +67,26 @@ ui <- dashboardPage(
 server <- function(input, output) {
 
     output$items <- renderDataTable(
-        test    
+        x %>% 
+            filter(wave %in% input$wave & 
+                       item_text_e != "n/a" & 
+                       item_text_e != "" & 
+                       data_collection %in% input$data) %>%
+            group_by(item_name, 
+                     wave, 
+                     item_text_e, 
+                     data_collection_a,
+                     mode_a,
+                     module,
+                     subsample) %>%
+            tally() %>%
+            select(item_name, 
+                   wave, 
+                   item_text_e,
+                   data_collection_a,
+                   mode_a,
+                   module,
+                   subsample)
     )
     
     output$intro_text <- renderText({ 
