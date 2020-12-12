@@ -5,10 +5,32 @@ library(DT)
 library(dplyr)
 
 # x <- read.csv2(
-#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv", 
-#     sep=',', 
+#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
+#     sep=',',
 #     header = T,
 #     encoding = "UTF-8")
+tabdata <- x %>%
+    filter(item_text_e != "n/a" &
+           item_text_e != "") %>%
+    group_by(item_name,
+             wave,
+             item_text_e,
+             data_collection,
+             data_collection_a,
+             mode,
+             mode_a,
+             module,
+             subsample) %>%
+    tally() %>%
+    select(item_name,
+           wave,
+           item_text_e,
+           data_collection,
+           data_collection_a,
+           mode,
+           mode_a,
+           module,
+           subsample)
 
 ui <- dashboardPage(
     dashboardHeader(title="TREE 2 Codebook"),
@@ -17,6 +39,8 @@ ui <- dashboardPage(
                          menuItem("Exploration", tabName = "exp", icon = icon("atom")),
                          menuItem("Help", tabName = "help", icon = icon("house-user"))
                      ),
+                     br(),
+                     textOutput("filter"),
                      checkboxGroupInput("data", "Data collection", 
                                         choices = list(
                                             "Base" = 1,
@@ -57,38 +81,31 @@ ui <- dashboardPage(
             tabItem(tabName = "exp",
                     textOutput("exp_intro"),
                     br(),                    
-                    dataTableOutput("items")
+                    DTOutput("items"),
+                    br(),
+                    verbatimTextOutput('meta')
             )
         )
     )
 )    
 
-# Define server logic required to draw a histogram
 server <- function(input, output) {
-
-    output$items <- renderDataTable(
-        x %>% 
-            filter(wave %in% input$wave & 
-                       item_text_e != "n/a" & 
-                       item_text_e != "" & 
-                       data_collection %in% input$data) %>%
-            group_by(item_name, 
-                     wave, 
-                     item_text_e, 
-                     data_collection_a,
-                     mode_a,
-                     module,
-                     subsample) %>%
-            tally() %>%
-            select(item_name, 
-                   wave, 
-                   item_text_e,
-                   data_collection_a,
-                   mode_a,
-                   module,
-                   subsample)
-    )
     
+    data <- reactive({
+             req(input$wave)
+             req(input$data)
+             df_data <- tabdata %>% dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
+    })
+    output$items <- renderDT(data(),
+                             selection = "single",
+                             filter="top"
+    )
+    output$meta = renderPrint({
+        data()[input$items_rows_selected,]
+    })
+    output$filter <- renderText({ 
+        " Quick select filters" 
+    })    
     output$intro_text <- renderText({ 
         "Hello friend!" 
     })
