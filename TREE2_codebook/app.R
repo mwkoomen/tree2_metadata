@@ -11,10 +11,18 @@ library(dplyr)
 #     encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
+            grid_text_e != "n/a" &  
            item_text_e != "") %>%
     group_by(item_name,
              wave,
              item_text_e,
+             item_text_d,
+             item_text_f,
+             item_text_i,
+             grid_text_e,
+             grid_text_d,
+             grid_text_f,
+             grid_text_i,
              data_collection,
              data_collection_a,
              mode,
@@ -25,6 +33,13 @@ tabdata <- x %>%
     select(item_name,
            wave,
            item_text_e,
+           item_text_d,
+           item_text_f,
+           item_text_i,
+           grid_text_e,
+           grid_text_d,
+           grid_text_f,
+           grid_text_i,
            data_collection,
            data_collection_a,
            mode,
@@ -36,8 +51,8 @@ ui <- dashboardPage(
     dashboardHeader(title="TREE 2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Exploration", tabName = "exp", icon = icon("atom")),
-                         menuItem("Help", tabName = "help", icon = icon("house-user"))
+                         menuItem("Browse by Variable", tabName = "exp", icon = icon("tree")),
+                         menuItem("Browse by Theme", tabName = "theme", icon = icon("tree"))
                      ),
                      br(),
                      textOutput("filter"),
@@ -60,33 +75,20 @@ ui <- dashboardPage(
     ),
     dashboardBody(
         tabItems(
-            tabItem(tabName = "help",
-                    textOutput("intro_text"),
-                    br(),
-                    textOutput("intro_body"),
-                    br(),
-                    textOutput("body_intro"),
-                    br(),
-                    textOutput("list1"),
-                    textOutput("list2"),
-                    br(),
-                    textOutput("body_tabs"),
-                    br(),
-                    textOutput("body_outro"),
-                    br(),
-                    textOutput("body_outro2"),
-                    br(),                    
-                    textOutput("outro")
-            ),
             tabItem(tabName = "exp",
+                sidebarLayout(
+                    sidebarPanel(
                     textOutput("exp_intro"),
                     br(),
+                    DTOutput("items"),width = 4),
+                mainPanel(
                     htmlOutput('meta'),
-                    br(), 
-                    htmlOutput('itemtext'),
                     br(),
+                    htmlOutput("gridtext"),
                     br(),
-                    DTOutput("items")
+                    htmlOutput('itemtext')
+                    )
+                )
             )
         )
     )
@@ -99,26 +101,40 @@ server <- function(input, output) {
              req(input$data)
              df_data <- tabdata %>% dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
     })
-    output$items <- DT::renderDataTable(data(),
+    output$items <- DT::renderDataTable(data()[c(1,2)],
                              selection = list(mode = 'single'),
                              #selection = "single",
                              filter="top"
     )
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=4><b>", "Variable name: ",
+            cat("<font size=5> Variable name: <b>",
                   as.character(data()$item_name[input$items_rows_selected]), 
                   "</b></font>")
         }
-        else{cat("<font size=4> <b> Variable name:</b> Pease select a row to display the corresponding codebook entry</font>")} 
+        else{cat("<font size=5> Variable name:<b>...Pease select a row to display the corresponding codebook entry </b></font>")} 
+    })
+    output$gridtext = renderPrint({
+        if(length(input$items_rows_selected) > 0){
+            cat("<font size=4> Grid text [EN]: <b><br>",
+                as.character(data()$grid_text_e[input$items_rows_selected]),
+                "</b> <br><br>Grid text [DE]: <b><br>",
+                as.character(data()$grid_text_d[input$items_rows_selected]),
+                "</b> <br><br>Grid text [FR]: <b><br>",
+                as.character(data()$grid_text_f[input$items_rows_selected]),
+                "</b> <br><br>Grid text [IT]: <b><br>",
+                as.character(data()$grid_text_i[input$items_rows_selected]),                
+                "</font>")
+        }
+        else{cat("<font size=4> Grid text [EN]: ... <br><br>Grid text [DE]: ... <br><br>Grid text [FR] ... <br><br>Grid text [IT] ... </font>")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=3><b>", "Item text [EN]: </b>",
+            cat("<font size=4> Item text [EN]: <b>",
                 as.character(data()$item_text_e[input$items_rows_selected]), 
-                "</font>")
+                "</b></font>")
         }
-        else{cat("<font size=3> <b> Item text [EN]:</b> </font>")} 
+        else{cat("<font size=4> Item text [EN]: ... </font>")} 
     })
     output$filter <- renderText({ 
         " Quick select filters" 
