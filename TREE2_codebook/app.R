@@ -80,10 +80,13 @@ ui <- dashboardPage(
             ),
             tabItem(tabName = "exp",
                     textOutput("exp_intro"),
-                    br(),                    
-                    DTOutput("items"),
                     br(),
-                    verbatimTextOutput('meta')
+                    htmlOutput('meta'),
+                    br(), 
+                    htmlOutput('itemtext'),
+                    br(),
+                    br(),
+                    DTOutput("items")
             )
         )
     )
@@ -96,12 +99,26 @@ server <- function(input, output) {
              req(input$data)
              df_data <- tabdata %>% dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
     })
-    output$items <- renderDT(data(),
-                             selection = "single",
+    output$items <- DT::renderDataTable(data(),
+                             selection = list(mode = 'single'),
+                             #selection = "single",
                              filter="top"
     )
     output$meta = renderPrint({
-        data()[input$items_rows_selected,]
+        if(length(input$items_rows_selected) > 0){
+            cat("<font size=4><b>", "Variable name: ",
+                  as.character(data()$item_name[input$items_rows_selected]), 
+                  "</b></font>")
+        }
+        else{cat("<font size=4> <b> Variable name:</b> Pease select a row to display the corresponding codebook entry</font>")} 
+    })
+    output$itemtext = renderPrint({
+        if(length(input$items_rows_selected) > 0){
+            cat("<font size=3><b>", "Item text [EN]: </b>",
+                as.character(data()$item_text_e[input$items_rows_selected]), 
+                "</font>")
+        }
+        else{cat("<font size=3> <b> Item text [EN]:</b> </font>")} 
     })
     output$filter <- renderText({ 
         " Quick select filters" 

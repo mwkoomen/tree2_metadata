@@ -31,6 +31,5 @@ test <- x %>%
          module,
          subsample)
 
-s <- "wave %in% c(0)"
-
-test2 <- assign(s, filter(x,))
+s <- as.vector(test[1,3])
+print(test$item_text_e[1])
