@@ -5,18 +5,18 @@ library(DT)
 library(dplyr)
 library(shinycssloaders)
 
-# x <- read.csv2(
-#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
-#     sep=',',
-#     header = T,
-#     encoding = "UTF-8") %>% withSpinner(color="#0dc5c1")
+x <- read.csv2(
+    "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
+    sep=',',
+    header = T,
+    encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
            item_text_e != "") %>%
-    group_by(item_id, 
+    group_by(item_name,
+             item_id, 
              item_version,
-             item_name,
              wave,
              item_text_e,
              item_text_d,
@@ -75,10 +75,43 @@ ui <- dashboardPage(
                                             "2" = 2
                                         ),
                                         selected = c(0,1,2)
-                     )            
-                     
+                     )
     ),
     dashboardBody(
+        tags$head(
+            tags$style(HTML("
+                    #gridtext {
+                      color: black;
+                      background: #FFFFFF;
+                      font-family:calibri;
+                      font-size: 22px;
+                      font-style: none;
+                      border-radius: 25px; 
+                      border: 2px solid #73AD21;
+                      padding: 20px;
+                    }
+                    #itemtext {
+                      color: black;
+                      background: #FFFFFF;
+                      font-family:calibri;
+                      font-size: 22px;
+                      font-style: none;
+                      border-radius: 25px; 
+                      border: 2px solid #73AD21;
+                      padding: 20px;                      
+                    } 
+                    #meta {
+                      color: black;
+                      background: #FFFFFF;
+                      font-family:calibri;
+                      font-size: 22px;
+                      font-style: none;
+                      border-radius: 25px; 
+                      border: 2px solid #73AD21;
+                      padding: 20px;                      
+                    }                     
+                    "))
+        ),        
         tabItems(
             tabItem(tabName = "exp",
                 sidebarLayout(
@@ -96,7 +129,12 @@ ui <- dashboardPage(
                     htmlOutput("response"),
                     br(),
                     DTOutput("values"),
-                    tags$style(".well {background-color:#CAD3D7;}")
+                    tags$style(".well {
+                               background-color:#FFFFFFF;
+                               border-radius: 25px; 
+                               border: 2px solid #73AD21;
+                               padding: 20px;
+                               }")
                     )
                 )
             )
@@ -116,10 +154,10 @@ server <- function(input, output) {
         req(input$items_rows_selected)
         values <- x %>% 
             dplyr::filter(item_id==data()$item_id[input$items_rows_selected] & 
-                              item_version==data()$item_version[input$items_rows_selected]) %>%
+                              wave==data()$wave[input$items_rows_selected]) %>%
             select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
     })    
-    output$items <- DT::renderDataTable(data()[c(3,4)],
+    output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(lengthMenu = c(15, 25, 50), pageLength = 15, autoWidth=T),            
                              selection = list(mode = 'single'),
                              filter="top", rownames=F
@@ -130,7 +168,7 @@ server <- function(input, output) {
                   as.character(data()$item_name[input$items_rows_selected]), 
                   "</b></font>")
         }
-        else{cat("")} 
+        else{cat("<font size=5><b>Variable:</b> ...please select a variable</font>")} 
     })
     output$gridtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
@@ -144,7 +182,7 @@ server <- function(input, output) {
                 as.character(data()$grid_text_i[input$items_rows_selected]),                
                 "</font>")
         }
-        else{cat("")} 
+        else{cat("<font size=4><b>Grid text:</b> ...")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
@@ -158,7 +196,7 @@ server <- function(input, output) {
                 as.character(data()$item_text_i[input$items_rows_selected]),                
                 "</font>")
         }
-        else{cat("")} 
+        else{cat("<font size=4><b>Item text:</b> ...")} 
     })
     output$response = renderPrint({
         if(length(input$items_rows_selected) > 0){
