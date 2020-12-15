@@ -5,11 +5,11 @@ library(DT)
 library(dplyr)
 library(shinycssloaders)
 
-x <- read.csv2(
-    "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
-    sep=',',
-    header = T,
-    encoding = "UTF-8")
+# x <- read.csv2(
+#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
+#     sep=',',
+#     header = T,
+#     encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
