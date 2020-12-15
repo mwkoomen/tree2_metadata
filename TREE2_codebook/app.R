@@ -5,16 +5,16 @@ library(DT)
 library(dplyr)
 library(shinycssloaders)
 
-# x <- read.csv2(
-#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
-#     sep=',',
-#     header = T,
-#     encoding = "UTF-8")
+x <- read.csv2(
+    "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/test.csv",
+    sep=',',
+    header = T,
+    encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
            item_text_e != "") %>%
-    group_by(item_name,
+    group_by(variable_name,
              item_id, 
              item_version,
              wave,
@@ -35,7 +35,7 @@ tabdata <- x %>%
     tally() %>%
     select(item_id,
            item_version,
-           item_name,
+           variable_name,
            wave,
            item_text_e,
            item_text_d,
@@ -53,7 +53,7 @@ tabdata <- x %>%
            subsample)
 
 ui <- dashboardPage(
-    dashboardHeader(title="TREE 2 Codebook"),
+    dashboardHeader(title="Codebook"),
     dashboardSidebar(
                      sidebarMenu(
                          menuItem("Browse by Variable", tabName = "exp", icon = icon("tree")),
@@ -165,7 +165,7 @@ server <- function(input, output) {
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
             cat("<font size=5> Variable: <b>",
-                  as.character(data()$item_name[input$items_rows_selected]), 
+                  as.character(data()$variable_name[input$items_rows_selected]), 
                   "</b></font>")
         }
         else{cat("<font size=5><b>Variable:</b> ...please select a variable</font>")} 
