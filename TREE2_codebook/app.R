@@ -3,17 +3,20 @@ library(shiny)
 library(shinydashboard)
 library(DT)
 library(dplyr)
+library(shinycssloaders)
 
 # x <- read.csv2(
 #     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/tree2_metadata_202012091031.csv",
 #     sep=',',
 #     header = T,
-#     encoding = "UTF-8")
+#     encoding = "UTF-8") %>% withSpinner(color="#0dc5c1")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
            item_text_e != "") %>%
-    group_by(item_name,
+    group_by(item_id, 
+             item_version,
+             item_name,
              wave,
              item_text_e,
              item_text_d,
@@ -30,7 +33,9 @@ tabdata <- x %>%
              module,
              subsample) %>%
     tally() %>%
-    select(item_name,
+    select(item_id,
+           item_version,
+           item_name,
            wave,
            item_text_e,
            item_text_d,
@@ -78,7 +83,7 @@ ui <- dashboardPage(
             tabItem(tabName = "exp",
                 sidebarLayout(
                     sidebarPanel(
-                    textOutput("exp_intro"),
+                    htmlOutput("exp_intro"),
                     br(),
                     DTOutput("items"),width = 4),
                 mainPanel(
@@ -86,7 +91,12 @@ ui <- dashboardPage(
                     br(),
                     htmlOutput("gridtext"),
                     br(),
-                    htmlOutput('itemtext')
+                    htmlOutput('itemtext'),
+                    br(),
+                    htmlOutput("response"),
+                    br(),
+                    DTOutput("values"),
+                    tags$style(".well {background-color:#CAD3D7;}")
                     )
                 )
             )
@@ -99,43 +109,72 @@ server <- function(input, output) {
     data <- reactive({
              req(input$wave)
              req(input$data)
-             df_data <- tabdata %>% dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
+             df_data <- tabdata %>% 
+                 dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
     })
-    output$items <- DT::renderDataTable(data()[c(1,2)],
+    resp_values <- reactive({
+        req(input$items_rows_selected)
+        values <- x %>% 
+            dplyr::filter(item_id==data()$item_id[input$items_rows_selected] & 
+                              item_version==data()$item_version[input$items_rows_selected]) %>%
+            select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
+    })    
+    output$items <- DT::renderDataTable(data()[c(3,4)],
+                             options = list(lengthMenu = c(15, 25, 50), pageLength = 15, autoWidth=T),            
                              selection = list(mode = 'single'),
-                             #selection = "single",
-                             filter="top"
+                             filter="top", rownames=F
     )
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=5> Variable name: <b>",
+            cat("<font size=5> Variable: <b>",
                   as.character(data()$item_name[input$items_rows_selected]), 
                   "</b></font>")
         }
-        else{cat("<font size=5> Variable name:<b>...Pease select a row to display the corresponding codebook entry </b></font>")} 
+        else{cat("")} 
     })
     output$gridtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=4> Grid text [EN]: <b><br>",
+            cat("<font size=4> <b>Grid text:</b><br>[EN]:",
                 as.character(data()$grid_text_e[input$items_rows_selected]),
-                "</b> <br><br>Grid text [DE]: <b><br>",
+                "<br>[DE]:",
                 as.character(data()$grid_text_d[input$items_rows_selected]),
-                "</b> <br><br>Grid text [FR]: <b><br>",
+                "<br>[FR]:",
                 as.character(data()$grid_text_f[input$items_rows_selected]),
-                "</b> <br><br>Grid text [IT]: <b><br>",
+                "<br>[IT]:",
                 as.character(data()$grid_text_i[input$items_rows_selected]),                
                 "</font>")
         }
-        else{cat("<font size=4> Grid text [EN]: ... <br><br>Grid text [DE]: ... <br><br>Grid text [FR] ... <br><br>Grid text [IT] ... </font>")} 
+        else{cat("")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=4> Item text [EN]: <b>",
-                as.character(data()$item_text_e[input$items_rows_selected]), 
-                "</b></font>")
+            cat("<font size=4> <b>Item text:</b><br>[EN]:",
+                as.character(data()$item_text_e[input$items_rows_selected]),
+                "<br>[DE]:",
+                as.character(data()$item_text_d[input$items_rows_selected]),
+                "<br>[FR]:",
+                as.character(data()$item_text_f[input$items_rows_selected]),
+                "<br>[IT]:",
+                as.character(data()$item_text_i[input$items_rows_selected]),                
+                "</font>")
         }
-        else{cat("<font size=4> Item text [EN]: ... </font>")} 
+        else{cat("")} 
     })
+    output$response = renderPrint({
+        if(length(input$items_rows_selected) > 0){
+            cat("<font size=4> <b>Response values:</b><br></font>")
+        }
+        else{cat("")} 
+    })
+    output$values = DT::renderDataTable({
+        if(length(input$items_rows_selected) > 0){
+            resp_values()
+        }
+        else{cat("")} 
+    })
+    output$exp_intro = renderPrint({
+            cat("<font size=5> <b>Select a variable:</b></font>")
+    })    
     output$filter <- renderText({ 
         " Quick select filters" 
     })    
@@ -169,7 +208,6 @@ server <- function(input, output) {
     output$outro <- renderText({ 
         "Enjoy!"  
     })       
-    
 }
 
 # Run the application 
