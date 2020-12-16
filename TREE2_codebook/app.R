@@ -57,7 +57,8 @@ ui <- dashboardPage(
     dashboardSidebar(
                      sidebarMenu(
                          menuItem("Browse by Variable", tabName = "exp", icon = icon("tree")),
-                         menuItem("Browse by Theme", tabName = "theme", icon = icon("tree"))
+                         menuItem("Browse by Theme", tabName = "theme", icon = icon("tree")),
+                         menuItem("Download documentation", tabName = "download", icon = icon("tree"))
                      ),
                      br(),
                      textOutput("filter"),
@@ -84,7 +85,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #FFFFFF;
                       font-family:calibri;
-                      font-size: 22px;
+                      font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
                       border: 2px solid #73AD21;
@@ -94,7 +95,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #FFFFFF;
                       font-family:calibri;
-                      font-size: 22px;
+                      font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
                       border: 2px solid #73AD21;
@@ -104,7 +105,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #FFFFFF;
                       font-family:calibri;
-                      font-size: 22px;
+                      font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
                       border: 2px solid #73AD21;
@@ -118,7 +119,8 @@ ui <- dashboardPage(
                     sidebarPanel(
                     htmlOutput("exp_intro"),
                     br(),
-                    DTOutput("items"),width = 4),
+                    DTOutput("items")
+                ),
                 mainPanel(
                     htmlOutput('meta'),
                     br(),
@@ -137,6 +139,11 @@ ui <- dashboardPage(
                                }")
                     )
                 )
+            ),
+            tabItem(tabName = "download",
+                    htmlOutput("dwn_text"),
+                    br(),
+                    downloadButton("dwn")
             )
         )
     )
@@ -164,39 +171,39 @@ server <- function(input, output) {
     )
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=5> Variable: <b>",
+            cat("<b>Variable: </b>",
                   as.character(data()$variable_name[input$items_rows_selected]), 
-                  "</b></font>")
+                  "</b>")
         }
-        else{cat("<font size=5><b>Variable:</b> ...please select a variable</font>")} 
+        else{cat("<b>Variable:</b>")} 
     })
     output$gridtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=4> <b>Grid text:</b><br>[EN]:",
+            cat("<b>Grid text:</b><br>[EN]:",
                 as.character(data()$grid_text_e[input$items_rows_selected]),
                 "<br>[DE]:",
                 as.character(data()$grid_text_d[input$items_rows_selected]),
                 "<br>[FR]:",
                 as.character(data()$grid_text_f[input$items_rows_selected]),
                 "<br>[IT]:",
-                as.character(data()$grid_text_i[input$items_rows_selected]),                
-                "</font>")
+                as.character(data()$grid_text_i[input$items_rows_selected])                
+                )
         }
-        else{cat("<font size=4><b>Grid text:</b> ...")} 
+        else{cat("<b>Grid text:</b>")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<font size=4> <b>Item text:</b><br>[EN]:",
+            cat("<b>Item text:</b><br>[EN]:",
                 as.character(data()$item_text_e[input$items_rows_selected]),
                 "<br>[DE]:",
                 as.character(data()$item_text_d[input$items_rows_selected]),
                 "<br>[FR]:",
                 as.character(data()$item_text_f[input$items_rows_selected]),
                 "<br>[IT]:",
-                as.character(data()$item_text_i[input$items_rows_selected]),                
-                "</font>")
+                as.character(data()$item_text_i[input$items_rows_selected])
+            )
         }
-        else{cat("<font size=4><b>Item text:</b> ...")} 
+        else{cat("<b>Item text:</b>")} 
     })
     output$response = renderPrint({
         if(length(input$items_rows_selected) > 0){
@@ -211,41 +218,14 @@ server <- function(input, output) {
         else{cat("")} 
     })
     output$exp_intro = renderPrint({
-            cat("<font size=5> <b>Select a variable:</b></font>")
+            cat("<font size=4> <b>Select a variable:</b></font>")
     })    
     output$filter <- renderText({ 
         " Quick select filters" 
-    })    
-    output$intro_text <- renderText({ 
-        "Hello friend!" 
     })
-    output$intro_body <- renderText({ 
-        "This application lets you explore some key variables from the European Value Survey and run a simple regression." 
-    })
-    output$body_intro <- renderText({ 
-        "Two main variables are covered by this application:" 
-    }) 
-    output$list1 <- renderText({ 
-        "1: [V72] To what extent do you agree with the following statement: 'When a mother works for pay, the children suffer'"
-    })
-    output$list2 <- renderText({ 
-        "2: [V80] To what extent do you agree with the following statement: 'When jobs are scarce, employers should give priority to citizens over immigrants'"
-    })
-    output$body_tabs <- renderText({ 
-        "You can view barplots for those variables plus some relevant demographic variables 
-        in the exploration tabs on dashboard on the left." 
-    })
-    output$body_outro <- renderText({ 
-        "Select your country of choice on the top corner of the dashboard to automatically calculate 
-        that country's descriptive statistics!" 
-    })
-    output$body_outro2 <- renderText({ 
-        "To run a simple linear regression, select an outcome and which control 
-        variales or age polynomials you would like to inlcude in the model and press the Regression tab on the left."
-    })       
-    output$outro <- renderText({ 
-        "Enjoy!"  
-    })       
+    output$dwn_text = renderPrint({
+        cat("<font size=5> <b>Download full documentation:</b></font>")
+    })     
 }
 
 # Run the application 
