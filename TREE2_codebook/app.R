@@ -4,6 +4,7 @@ library(shinydashboard)
 library(DT)
 library(dplyr)
 library(shinycssloaders)
+library(dashboardthemes)
 
 x <- read.csv2(
     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/test.csv",
@@ -53,32 +54,36 @@ tabdata <- x %>%
            subsample)
 
 ui <- dashboardPage(
-    dashboardHeader(title="Codebook"),
+    dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Browse by Variable", tabName = "exp", icon = icon("tree")),
+                         menuItem("Browse by Variable", tabName = "exp", icon = icon("th")),
                          menuItem("Browse by Theme", tabName = "theme", icon = icon("tree")),
-                         menuItem("Download documentation", tabName = "download", icon = icon("tree"))
+                         menuItem("Download documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
                      ),
                      br(),
-                     textOutput("filter"),
-                     checkboxGroupInput("data", "Data collection", 
-                                        choices = list(
-                                            "Base" = 1,
-                                            "Complementary" = 2
-                                            ),
+                     checkboxGroupInput("data", tags$span("Filter: data collection", style = "color: grey;"),
+                                        choiceNames = list(
+                                            tags$span("Base", style = "color: grey;"),
+                                            tags$span("Complementary", style = "color: grey;") 
+                                        ),
+                                        choiceValues = c(1,2),
                                         selected = c(1,2)
                      ),            
-                     checkboxGroupInput("wave", "Include waves", 
-                                        choices = list(
-                                            "0" = 0,
-                                            "1" = 1, 
-                                            "2" = 2
+                     checkboxGroupInput("wave", tags$span("Filter: survey waves", style="color:grey;"), 
+                                        choiceNames = list(
+                                            tags$span("0", style="color:grey;"),
+                                            tags$span("1", style="color:grey;"),
+                                            tags$span("2", style="color:grey;")
                                         ),
+                                        choiceValues = c(0,1,2),
                                         selected = c(0,1,2)
                      )
     ),
-    dashboardBody(
+    dashboardBody(    
+        shinyDashboardThemes(
+        theme = "onenote"
+        ),
         tags$head(
             tags$style(HTML("
                     #gridtext {
@@ -88,7 +93,7 @@ ui <- dashboardPage(
                       font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #73AD21;
+                      border: 2px solid #AAAAAA;
                       padding: 20px;
                     }
                     #itemtext {
@@ -98,7 +103,7 @@ ui <- dashboardPage(
                       font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #73AD21;
+                      border: 2px solid #AAAAAA;
                       padding: 20px;                      
                     } 
                     #meta {
@@ -108,9 +113,9 @@ ui <- dashboardPage(
                       font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #73AD21;
+                      border: 2px solid #AAAAAA;
                       padding: 20px;                      
-                    }                     
+                    }
                     "))
         ),        
         tabItems(
@@ -119,7 +124,7 @@ ui <- dashboardPage(
                     sidebarPanel(
                     htmlOutput("exp_intro"),
                     br(),
-                    DTOutput("items")
+                    DTOutput("items"),
                 ),
                 mainPanel(
                     htmlOutput('meta'),
@@ -128,22 +133,22 @@ ui <- dashboardPage(
                     br(),
                     htmlOutput('itemtext'),
                     br(),
-                    htmlOutput("response"),
-                    br(),
-                    DTOutput("values"),
-                    tags$style(".well {
-                               background-color:#FFFFFFF;
-                               border-radius: 25px; 
-                               border: 2px solid #73AD21;
-                               padding: 20px;
-                               }")
+                    DTOutput("values")#,
+                    # tags$style(".well {
+                    #            background-color:#FFFFFFF;
+                    #            border-radius: 25px;
+                    #            border: 2px solid #AAAAAA;
+                    #            padding: 20px;
+                    #            }")
                     )
                 )
             ),
             tabItem(tabName = "download",
                     htmlOutput("dwn_text"),
                     br(),
-                    downloadButton("dwn")
+                    actionButton(inputId='dwn', label="Download .pdf", 
+                                 icon = icon("arrow-alt-circle-down"), 
+                                 onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
             )
         )
     )
@@ -165,21 +170,30 @@ server <- function(input, output) {
             select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
     })    
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
-                             options = list(lengthMenu = c(15, 25, 50), pageLength = 15, autoWidth=T),            
+                             options = list(
+                                 lengthMenu = c(15, 25, 50), 
+                                 pageLength = 15, 
+                                 autoWidth=T, 
+                                 dom='ft',
+                                 initComplete = JS(
+                                     "function(settings, json) {",
+                                     "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                     "}")
+                                 ),            
                              selection = list(mode = 'single'),
-                             filter="top", rownames=F
+                             rownames=F
     )
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Variable: </b>",
+            cat("<b>Variable </b>",
                   as.character(data()$variable_name[input$items_rows_selected]), 
                   "</b>")
         }
-        else{cat("<b>Variable:</b>")} 
+        else{cat("<b>Variable</b>")} 
     })
     output$gridtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Grid text:</b><br>[EN]:",
+            cat("<b>Grid text</b><br>[EN]:",
                 as.character(data()$grid_text_e[input$items_rows_selected]),
                 "<br>[DE]:",
                 as.character(data()$grid_text_d[input$items_rows_selected]),
@@ -189,11 +203,11 @@ server <- function(input, output) {
                 as.character(data()$grid_text_i[input$items_rows_selected])                
                 )
         }
-        else{cat("<b>Grid text:</b>")} 
+        else{cat("<b>Grid text</b>")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Item text:</b><br>[EN]:",
+            cat("<b>Item text</b><br>[EN]:",
                 as.character(data()$item_text_e[input$items_rows_selected]),
                 "<br>[DE]:",
                 as.character(data()$item_text_d[input$items_rows_selected]),
@@ -203,28 +217,26 @@ server <- function(input, output) {
                 as.character(data()$item_text_i[input$items_rows_selected])
             )
         }
-        else{cat("<b>Item text:</b>")} 
+        else{cat("<b>Item text</b>")} 
     })
     output$response = renderPrint({
-        if(length(input$items_rows_selected) > 0){
-            cat("<font size=4> <b>Response values:</b><br></font>")
-        }
-        else{cat("")} 
+            cat("<b>Response values</b><br>")
     })
-    output$values = DT::renderDataTable({
-        if(length(input$items_rows_selected) > 0){
-            resp_values()
-        }
-        else{cat("")} 
-    })
+    output$values = DT::renderDataTable(resp_values(),
+                                        options=list(
+                                            dom='t',
+                                            initComplete = JS(
+                                                "function(settings, json) {",
+                                                "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                "}")
+                                            ),
+                                        rownames=F)
+
     output$exp_intro = renderPrint({
-            cat("<font size=4> <b>Select a variable:</b></font>")
+            cat("<font size=4> <b>Select a variable</b></font>")
     })    
-    output$filter <- renderText({ 
-        " Quick select filters" 
-    })
     output$dwn_text = renderPrint({
-        cat("<font size=5> <b>Download full documentation:</b></font>")
+        cat("<font size=5> <b>Download full documentation</b></font>")
     })     
 }
 
