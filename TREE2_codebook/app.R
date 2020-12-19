@@ -62,58 +62,88 @@ ui <- dashboardPage(
                          menuItem("Download documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
                      ),
                      br(),
-                     checkboxGroupInput("data", tags$span("Filter: data collection", style = "color: grey;"),
+                     checkboxGroupInput("data", tags$span("Filter: data collection", style = "color: black;"),
                                         choiceNames = list(
-                                            tags$span("Base", style = "color: grey;"),
-                                            tags$span("Complementary", style = "color: grey;") 
+                                            tags$span("Base", style = "color: black;"),
+                                            tags$span("Complementary", style = "color: black;") 
                                         ),
                                         choiceValues = c(1,2),
                                         selected = c(1,2)
                      ),            
-                     checkboxGroupInput("wave", tags$span("Filter: survey waves", style="color:grey;"), 
+                     checkboxGroupInput("wave", tags$span("Filter: survey waves", style="color:black;"), 
                                         choiceNames = list(
-                                            tags$span("0", style="color:grey;"),
-                                            tags$span("1", style="color:grey;"),
-                                            tags$span("2", style="color:grey;")
+                                            tags$span("0", style="color:black;"),
+                                            tags$span("1", style="color:black;"),
+                                            tags$span("2", style="color:black;")
                                         ),
                                         choiceValues = c(0,1,2),
                                         selected = c(0,1,2)
                      )
     ),
     dashboardBody(    
-        shinyDashboardThemes(
-        theme = "onenote"
-        ),
+        # shinyDashboardThemes(
+        # theme = "onenote"
+        # ),
         tags$head(
             tags$style(HTML("
+                    .skin-blue .main-header .logo {
+                        color: black;
+                        /*font-family: \"Georgia\", Times, \"Times New Roman\", serif;*/
+                        font-weight: bold;
+                        font-size: 20px;                        
+                        background-color: #F0EFEF;
+                    }
+                    .skin-blue .main-header .logo:hover {
+                        background-color: #F0EFEF;
+                    }
+                    .skin-blue .main-header .navbar {
+                        background-color: #F0EFEF;
+                    } 
+                    .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                        background-color: #F0EFEF;
+                    } 
+                    .skin-blue .main-header .navbar .sidebar-toggle{
+                        background-color: #F0EFEF;
+                    } 
+                    .skin-blue .main-sidebar {
+                        background-color: #F0EFEF;
+                    } 
+                    .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                        background-color: #F0EFEF;
+                        color: #000000;
+                    }                    
+                    .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                        color: black;
+                        background-color: #CFCFCF;
+                    } 
+                    .content-wrapper, .right-side {
+                        background-color: #FFFFFF;
+                    }                    
                     #gridtext {
                       color: black;
-                      background: #FFFFFF;
+                      background: #F0EFEF;
                       font-family:calibri;
                       font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #AAAAAA;
                       padding: 20px;
                     }
                     #itemtext {
                       color: black;
-                      background: #FFFFFF;
+                      background: #F0EFEF;
                       font-family:calibri;
                       font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #AAAAAA;
                       padding: 20px;                      
                     } 
                     #meta {
                       color: black;
-                      background: #FFFFFF;
+                      background: #F0EFEF;
                       font-family:calibri;
-                      font-size: 18px;
+                      font-size: 20px;
                       font-style: none;
                       border-radius: 25px; 
-                      border: 2px solid #AAAAAA;
                       padding: 20px;                      
                     }
                     "))
@@ -140,7 +170,7 @@ ui <- dashboardPage(
                     #            border: 2px solid #AAAAAA;
                     #            padding: 20px;
                     #            }")
-                    )
+                    ),
                 )
             ),
             tabItem(tabName = "download",
@@ -181,6 +211,7 @@ server <- function(input, output) {
                                      "}")
                                  ),            
                              selection = list(mode = 'single'),
+                             colnames = c('Variable', 'Wave', 'Data collection'), 
                              rownames=F
     )
     output$meta = renderPrint({
@@ -193,29 +224,45 @@ server <- function(input, output) {
     })
     output$gridtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Grid text</b><br>[EN]:",
-                as.character(data()$grid_text_e[input$items_rows_selected]),
-                "<br>[DE]:",
-                as.character(data()$grid_text_d[input$items_rows_selected]),
-                "<br>[FR]:",
-                as.character(data()$grid_text_f[input$items_rows_selected]),
-                "<br>[IT]:",
-                as.character(data()$grid_text_i[input$items_rows_selected])                
+            cat("<b>Grid text</b>
+                    <br>
+                    <table style=\"width:90%\">
+                      <tr>
+                        <th>EN</th>
+                        <th>DE</th>
+                        <th>FR</th>
+                        <th>IT</th>
+                      </tr>
+              <tr>
+                <td>",as.character(data()$grid_text_e[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$grid_text_d[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$grid_text_f[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$grid_text_i[input$items_rows_selected]),"</td>
+              </tr>
+            </table>"
                 )
         }
         else{cat("<b>Grid text</b>")} 
     })
     output$itemtext = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Item text</b><br>[EN]:",
-                as.character(data()$item_text_e[input$items_rows_selected]),
-                "<br>[DE]:",
-                as.character(data()$item_text_d[input$items_rows_selected]),
-                "<br>[FR]:",
-                as.character(data()$item_text_f[input$items_rows_selected]),
-                "<br>[IT]:",
-                as.character(data()$item_text_i[input$items_rows_selected])
-            )
+            cat("<b>Item text</b>
+                    <br>
+                    <table style=\"width:90%\">
+                      <tr>
+                        <th>EN</th>
+                        <th>DE</th>
+                        <th>FR</th>
+                        <th>IT</th>
+                      </tr>
+              <tr>
+                <td>",as.character(data()$item_text_e[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$item_text_d[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$item_text_f[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$item_text_i[input$items_rows_selected]),"</td>
+              </tr>
+            </table>"
+            )            
         }
         else{cat("<b>Item text</b>")} 
     })
@@ -230,6 +277,7 @@ server <- function(input, output) {
                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
                                                 "}")
                                             ),
+                                        colnames = c('Value','Label [EN]','Label [DE]','Label [FR]','Label [IT]'), 
                                         rownames=F)
 
     output$exp_intro = renderPrint({
