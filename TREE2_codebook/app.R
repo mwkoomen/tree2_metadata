@@ -60,9 +60,10 @@ ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Browse by Variable", tabName = "exp", icon = icon("th")),
-                         menuItem("Browse by Theme", tabName = "theme", icon = icon("tree")),
-                         menuItem("Download documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
+                         menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
+                         menuItem("Browse by Concepts / Themes", tabName = "theme", icon = icon("tree")),
+                         menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
+                         menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
                      )
                      # materialSwitch(inputId = "w0", label = tags$span("Wave 0", style = "color: black;"), status = "success", value=T),
                      # materialSwitch(inputId = "w1", label = tags$span("Wave 1", style = "color: black;"), status = "success", value=T),
@@ -202,43 +203,72 @@ ui <- dashboardPage(
                     ),
                 )
             ),
+            tabItem(tabName = 'suf',
+                    selectInput("sufs","Select a Sientific Use-File to browse variables",x$suf_name,multiple = F,selected="A")
+                    ),
             tabItem(tabName = "download",
-                sidebarLayout(
-                    sidebarPanel(
-                    htmlOutput("dwn_text"),
-                    br(),
-                    actionButton(inputId='dwn', label="Download .pdf", 
-                                 icon = icon("arrow-alt-circle-down"), 
-                                 onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';"),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    htmlOutput("dwn_text2"),
-                    br(),
-                    actionButton(inputId='dwn2', label="Download .pdf", 
-                                 icon = icon("arrow-alt-circle-down"), 
-                                 onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';"),
-                    br(),
-                    br(),
-                    br(),
-                    br(),
-                    htmlOutput("dwn_text3"),
-                    br(),
-                    actionButton(inputId='dwn3', label="Download .pdf", 
-                                 icon = icon("arrow-alt-circle-down"), 
-                                 onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';"),
-                    
-                    tags$style(".well {
-                                background-color:#FFFFFF;
-                                border-radius: 25px;
-                                padding: 20px;
-                                }")
-                    ),
-                    mainPanel(
-                    ),
-                    
-                )
+                #sidebarLayout(
+                    #sidebarPanel(
+                        br(),
+                        div(style="display: inline-block;vertical-align:top; width: 600px;
+                                    color: black;
+                                    background: #FFFFFF;
+                                    font-family:calibri;
+                                    font-size: 18px;
+                                    font-style: none;
+                                    border: 2px solid #AAAAAA;
+                                    border-radius: 25px;
+                                    padding: 20px;",
+                            htmlOutput("dwn_text"),
+                            HTML("<br>"),
+                            actionButton(inputId='dwn', label="Download .pdf", 
+                              icon = icon("arrow-alt-circle-down"), 
+                              onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        div(style="display: inline-block;vertical-align:top; width: 600px;
+                                    color: black;
+                                    background: #FFFFFF;
+                                    font-family:calibri;
+                                    font-size: 18px;
+                                    font-style: none;
+                                    border: 2px solid #AAAAAA;
+                                    border-radius: 25px;
+                                    padding: 20px;",
+                            htmlOutput("dwn_text2"),
+                            HTML("<br>"),
+                            actionButton(inputId='dwn2', label="Download .pdf", 
+                                         icon = icon("arrow-alt-circle-down"), 
+                                         onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")),
+                        br(),
+                        br(),
+                        br(),
+                        br(),
+                        div(style="display: inline-block;vertical-align:top; width: 600px;
+                                    color: black;
+                                    background: #FFFFFF;
+                                    font-family:calibri;
+                                    font-size: 18px;
+                                    font-style: none;
+                                    border: 2px solid #AAAAAA;
+                                    border-radius: 25px;
+                                    padding: 20px;",
+                            htmlOutput("dwn_text3"),
+                            HTML("<br>"),
+                            actionButton(inputId='dwn3', label="Download .pdf", 
+                                         icon = icon("arrow-alt-circle-down"), 
+                                         onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';"))
+                # tags$style(".well {
+                     #             background-color:#FFFFFF;
+                     #             border-radius: 25px;
+                     #             padding: 20px;
+                     #             }")
+                    #),
+                    #mainPanel(
+                    #),
+                #)
             )
         )
     )
@@ -379,13 +409,13 @@ server <- function(input, output) {
         cat("<font size=3> Quick select filters:</font>")
     })     
     output$dwn_text = renderPrint({
-        cat("<font size=4> <b>Download Project Codebook</b></font>")
+        cat("<font size=3> <b>Download Project Codebook</b></font>")
     })
     output$dwn_text2 = renderPrint({
-        cat("<font size=4> <b>Download Weighting Documentation</b></font>")
+        cat("<font size=3> <b>Download Weighting Documentation</b></font>")
     })
     output$dwn_text3 = renderPrint({
-        cat("<font size=4> <b>Download Scaling Documentation</b></font>")
+        cat("<font size=3> <b>Download Scaling Documentation</b></font>")
     })      
 }
 
