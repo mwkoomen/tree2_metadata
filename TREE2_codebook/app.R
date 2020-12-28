@@ -17,6 +17,12 @@ tabdata <- x %>%
             grid_text_e != "n/a" &  
            item_text_e != "") %>%
     group_by(variable_name,
+             theme1,
+             theme2,
+             theme3,
+             concept_text,
+             concept_text_long,
+             suf_name,
              item_id, 
              item_version,
              wave,
@@ -54,7 +60,14 @@ tabdata <- x %>%
            mode_a,
            module,
            subsample,
-           variable_type)
+           variable_type,
+           theme1,
+           theme2,
+           theme3,
+           concept_text,
+           concept_text_long,
+           suf_name
+    )
 
 ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
@@ -164,7 +177,7 @@ ui <- dashboardPage(
                     br(),
                     htmlOutput('intro1'),
                     br(),
-                    checkboxGroupInput("data", tags$span("Filter: data collection", style = "color: black;"),
+                    checkboxGroupInput("data", tags$span("Data collection", style = "color: black;"),
                                        choiceNames = list(
                                            tags$span("Base", style = "color: black;"),
                                            tags$span("Complementary", style = "color: black;") 
@@ -172,7 +185,7 @@ ui <- dashboardPage(
                                        choiceValues = c(1,2),
                                        selected = c(1,2)
                     ),            
-                    checkboxGroupInput("wave", tags$span("Filter: survey waves", style="color:black;"), 
+                    checkboxGroupInput("wave", tags$span("Survey waves", style="color:black;"), 
                                        choiceNames = list(
                                            tags$span("0", style="color:black;"),
                                            tags$span("1", style="color:black;"),
@@ -203,9 +216,47 @@ ui <- dashboardPage(
                     ),
                 )
             ),
+            tabItem(tabName = 'theme',
+                    sidebarLayout(
+                        sidebarPanel(
+                            selectInput(
+                                "theme1",tags$span("Select global theme:", 
+                                                 style = "color: black;
+                                                     font-size: 18px;"),x$theme1,multiple = F
+                            ),
+                            selectInput(
+                                "theme2",tags$span("Select theme:", 
+                                                   style = "color: black;
+                                                     font-size: 18px;"),x$theme2,multiple = F
+                            ),                            selectInput(
+                                "theme3",tags$span("Select sub-theme:", 
+                                                   style = "color: black;
+                                                     font-size: 18px;"),x$theme3,multiple = F
+                            ),                            
+                            br(),
+                            htmlOutput("theme_intro"),
+                            br(),
+                            DTOutput("theme_items")
+                        ),
+                        mainPanel()
+                    )
+            ),            
             tabItem(tabName = 'suf',
-                    selectInput("sufs","Select a Sientific Use-File to browse variables",x$suf_name,multiple = F,selected="A")
+                    sidebarLayout(
+                        sidebarPanel(
+                                selectInput(
+                                    "sufs",tags$span("Select a Sientific Use-File:", 
+                                                     style = "color: black;
+                                                     font-size: 18px;"),x$suf_name,multiple = F,selected="T0"
+                            ),
+                            br(),
+                        htmlOutput("suf_intro"),
+                        br(),
+                        DTOutput("suf_items")
                     ),
+                    mainPanel()
+                )
+            ),
             tabItem(tabName = "download",
                 #sidebarLayout(
                     #sidebarPanel(
@@ -274,14 +325,30 @@ ui <- dashboardPage(
     )
 )    
 
-server <- function(input, output) {
-    
-    data <- reactive({
-             req(input$wave)
-             req(input$data)
-             df_data <- tabdata %>% 
-                 dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
+server <- function(input,output,session) {
+
+    observe({
+        updateSelectInput(session, "theme2",choices = data3()$theme2
+        )})
+    observe({
+        updateSelectInput(session, "theme3",choices = data3()$theme3
+        )})     
+    data3 <- reactive({
+        req(input$theme1)
+        theme_data <- tabdata %>% 
+            dplyr::filter(theme1 %in% input$theme1)
+    })    
+    data2 <- reactive({
+             req(input$sufs)
+             suf_data <- tabdata %>% 
+                 dplyr::filter(suf_name %in% input$sufs)
     })
+    data <- reactive({
+        req(input$wave)
+        req(input$data)
+        df_data <- tabdata %>% 
+            dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
+    })    
     measurew <- reactive({
         req(input$items_rows_selected)
         mw <- x %>% 
@@ -313,6 +380,37 @@ server <- function(input, output) {
                              colnames = c('Variable', 'Wave', 'Data collection'), 
                              rownames=F
     )
+    output$suf_items <- DT::renderDataTable(data2()[c(3,4,14)],
+                                        options = list(
+                                            lengthMenu = c(15, 25, 50), 
+                                            pageLength = 15, 
+                                            autoWidth=F, 
+                                            dom='ft',
+                                            initComplete = JS(
+                                                "function(settings, json) {",
+                                                "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                "}")
+                                        ),            
+                                        selection = list(mode = 'single'),
+                                        colnames = c('Variable', 'Wave', 'Data collection'), 
+                                        rownames=F
+    )
+    output$theme_items <- DT::renderDataTable(data3()[c(3,4,14)],
+                                            options = list(
+                                                lengthMenu = c(15, 25, 50), 
+                                                pageLength = 15, 
+                                                autoWidth=F, 
+                                                dom='ft',
+                                                initComplete = JS(
+                                                    "function(settings, json) {",
+                                                    "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                    "}")
+                                            ),            
+                                            selection = list(mode = 'single'),
+                                            colnames = c('Variable', 'Wave', 'Data collection'), 
+                                            rownames=F
+    )    
+    
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
             cat("<b>Variable</b>",
@@ -405,6 +503,12 @@ server <- function(input, output) {
     output$exp_intro = renderPrint({
             cat("<font size=4> <b>Select a Variable</b></font>")
     }) 
+    output$suf_intro = renderPrint({
+        cat("<font size=4> <b>Select a Variable</b></font>")
+    })  
+    output$theme_intro = renderPrint({
+        cat("<font size=4> <b>Select a Variable</b></font>")
+    })     
     output$intro1 = renderPrint({
         cat("<font size=3> Quick select filters:</font>")
     })     
