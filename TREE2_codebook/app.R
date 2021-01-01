@@ -40,7 +40,8 @@ tabdata <- x %>%
              mode_a,
              module,
              subsample,
-             variable_type) %>%
+             variable_type,
+             format) %>%
     tally() %>%
     select(item_id,
            item_version,
@@ -66,9 +67,13 @@ tabdata <- x %>%
            theme3,
            concept_text,
            concept_text_long,
-           suf_name
+           suf_name,
+           format
     )
-
+theme1 <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
+theme2 <- tabdata %>% group_by(theme2) %>% tally() %>% select(theme2)
+theme3 <- tabdata %>% group_by(theme3) %>% tally() %>% select(theme3)
+concept <- tabdata %>% group_by(concept_text_long) %>% tally() %>% select(concept_text_long)
 ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
@@ -88,6 +93,10 @@ ui <- dashboardPage(
         # ),
         tags$head(
             tags$style(HTML("
+                    .box.box-solid.box-primary>.box-header {
+                    color:#fff;
+                    background:#7F7F7F
+                    }
                     .skin-blue .main-header .logo {
                         color: black;
                         /*font-family: \"Georgia\", Times, \"Times New Roman\", serif;*/
@@ -165,35 +174,42 @@ ui <- dashboardPage(
                       font-style: none;
                     }
                     #items { cursor: pointer; }
+                    #theme_items { cursor: pointer; }
+                    #suf_items { cursor: pointer; }
+                    #theme1 {cursor:pointer}
+                    #theme2 {cursor:pointer}
+                    #theme3 {cursor:pointer}
                     "))
         ),        
         tabItems(
             tabItem(tabName = "exp",
                 sidebarLayout(
                     sidebarPanel(
-                    htmlOutput("exp_intro"),
-                    br(),
-                    DTOutput("items"),
-                    br(),
                     htmlOutput('intro1'),
                     br(),
-                    checkboxGroupInput("data", tags$span("Data collection", style = "color: black;"),
+                    checkboxGroupInput("format", tags$span("Data format", style = "color: black;"),
                                        choiceNames = list(
-                                           tags$span("Base", style = "color: black;"),
-                                           tags$span("Complementary", style = "color: black;") 
+                                           tags$span("cross-sectional", style = "color: black;"),
+                                           tags$span("longitudinal", style = "color: black;") 
                                        ),
                                        choiceValues = c(1,2),
-                                       selected = c(1,2)
-                    ),            
-                    checkboxGroupInput("wave", tags$span("Survey waves", style="color:black;"), 
+                                       selected = c(1,2),
+                                       inline=F
+                    ),                     
+                    checkboxGroupInput("wave", tags$span("Include survey waves:", style="color:black;"), 
                                        choiceNames = list(
                                            tags$span("0", style="color:black;"),
                                            tags$span("1", style="color:black;"),
                                            tags$span("2", style="color:black;")
                                        ),
                                        choiceValues = c(0,1,2),
-                                       selected = c(0,1,2)
-                    ),                    
+                                       selected = c(0,1,2),
+                                       inline = F
+                    ),
+                    br(),
+                    htmlOutput("exp_intro"),
+                    br(),
+                    DTOutput("items")
                 ),
                 mainPanel(
                     htmlOutput('meta'),
@@ -213,33 +229,25 @@ ui <- dashboardPage(
                                 border: 2px solid #AAAAAA;
                                 padding: 20px;
                                 }")
-                    ),
+                    )
                 )
             ),
             tabItem(tabName = 'theme',
-                    sidebarLayout(
-                        sidebarPanel(
-                            selectInput(
-                                "theme1",tags$span("Select global theme:", 
-                                                 style = "color: black;
-                                                     font-size: 18px;"),x$theme1,multiple = F
-                            ),
-                            selectInput(
-                                "theme2",tags$span("Select theme:", 
-                                                   style = "color: black;
-                                                     font-size: 18px;"),x$theme2,multiple = F
-                            ),                            selectInput(
-                                "theme3",tags$span("Select sub-theme:", 
-                                                   style = "color: black;
-                                                     font-size: 18px;"),x$theme3,multiple = F
-                            ),                            
-                            br(),
-                            htmlOutput("theme_intro"),
-                            br(),
-                            DTOutput("theme_items")
-                        ),
-                        mainPanel()
-                    )
+                    box(title = "1. Global level themes", status = "primary",height = "400" ,
+                        solidHeader = T, width="3",
+                        DTOutput("theme1")),
+                    box( title = "1. Meso level themes", status = "primary", height = 
+                             "400",width = "3",solidHeader = T, 
+                         DTOutput("theme2")),
+                    box( title = "1. Sub level themes", status = "primary", height = 
+                             "400",width = "3",solidHeader = T, 
+                         DTOutput("theme3")),
+                    box( title = "1. Variable level concept", status = "primary", height = 
+                              "400",width = "3",solidHeader = T, 
+                          DTOutput("concept")),
+                    box( title = "Meta data", status = "primary", height = 
+                             "400",width = "12",solidHeader = T
+                         )
             ),            
             tabItem(tabName = 'suf',
                     sidebarLayout(
@@ -247,7 +255,7 @@ ui <- dashboardPage(
                                 selectInput(
                                     "sufs",tags$span("Select a Sientific Use-File:", 
                                                      style = "color: black;
-                                                     font-size: 18px;"),x$suf_name,multiple = F,selected="T0"
+                                                     font-size: 16px;"),x$suf_name,multiple = F,selected="T0"
                             ),
                             br(),
                         htmlOutput("suf_intro"),
@@ -323,21 +331,9 @@ ui <- dashboardPage(
             )
         )
     )
-)    
-
+)
 server <- function(input,output,session) {
-
-    observe({
-        updateSelectInput(session, "theme2",choices = data3()$theme2
-        )})
-    observe({
-        updateSelectInput(session, "theme3",choices = data3()$theme3
-        )})     
-    data3 <- reactive({
-        req(input$theme1)
-        theme_data <- tabdata %>% 
-            dplyr::filter(theme1 %in% input$theme1)
-    })    
+    
     data2 <- reactive({
              req(input$sufs)
              suf_data <- tabdata %>% 
@@ -345,9 +341,9 @@ server <- function(input,output,session) {
     })
     data <- reactive({
         req(input$wave)
-        req(input$data)
+        req(input$format)
         df_data <- tabdata %>% 
-            dplyr::filter(wave %in% input$wave & data_collection %in% input$data)
+            dplyr::filter(wave %in% input$wave & format %in% input$format)
     })    
     measurew <- reactive({
         req(input$items_rows_selected)
@@ -367,10 +363,13 @@ server <- function(input,output,session) {
     })    
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(
-                                 lengthMenu = c(15, 25, 50), 
-                                 pageLength = 15, 
+                                 #lengthMenu = c(15, 25, 50), 
+                                 pageLength = 12, 
                                  autoWidth=F, 
                                  dom='ft',
+                                 scrollY = '400px', 
+                                 paging = FALSE, 
+                                 scrollX = TRUE,
                                  initComplete = JS(
                                      "function(settings, json) {",
                                      "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
@@ -382,10 +381,13 @@ server <- function(input,output,session) {
     )
     output$suf_items <- DT::renderDataTable(data2()[c(3,4,14)],
                                         options = list(
-                                            lengthMenu = c(15, 25, 50), 
+                                            #lengthMenu = c(15, 25, 50), 
                                             pageLength = 15, 
                                             autoWidth=F, 
                                             dom='ft',
+                                            scrollY = '400px', 
+                                            paging = FALSE, 
+                                            scrollX = TRUE,                                            
                                             initComplete = JS(
                                                 "function(settings, json) {",
                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
@@ -395,22 +397,78 @@ server <- function(input,output,session) {
                                         colnames = c('Variable', 'Wave', 'Data collection'), 
                                         rownames=F
     )
-    output$theme_items <- DT::renderDataTable(data3()[c(3,4,14)],
+    output$theme1 <- DT::renderDataTable(theme1,
                                             options = list(
-                                                lengthMenu = c(15, 25, 50), 
+                                                #lengthMenu = c(15, 25, 50), 
                                                 pageLength = 15, 
                                                 autoWidth=F, 
                                                 dom='ft',
+                                                scrollY = '400px', 
+                                                paging = FALSE, 
+                                                scrollX = TRUE,                                                
                                                 initComplete = JS(
                                                     "function(settings, json) {",
                                                     "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
                                                     "}")
                                             ),            
                                             selection = list(mode = 'single'),
-                                            colnames = c('Variable', 'Wave', 'Data collection'), 
+                                            colnames = c('1. Theme'), 
                                             rownames=F
+    )
+    output$theme2 <- DT::renderDataTable(theme2,
+                                         options = list(
+                                             #lengthMenu = c(15, 25, 50), 
+                                             pageLength = 15, 
+                                             autoWidth=F, 
+                                             dom='ft',
+                                             scrollY = '400px', 
+                                             paging = FALSE, 
+                                             scrollX = TRUE,                                                
+                                             initComplete = JS(
+                                                 "function(settings, json) {",
+                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                 "}")
+                                         ),            
+                                         selection = list(mode = 'single'),
+                                         colnames = c('2. Theme'), 
+                                         rownames=F
     )    
-    
+    output$theme3 <- DT::renderDataTable(theme3,
+                                         options = list(
+                                             #lengthMenu = c(15, 25, 50), 
+                                             pageLength = 15, 
+                                             autoWidth=F, 
+                                             dom='ft',
+                                             scrollY = '400px', 
+                                             paging = FALSE, 
+                                             scrollX = TRUE,                                                
+                                             initComplete = JS(
+                                                 "function(settings, json) {",
+                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                 "}")
+                                         ),            
+                                         selection = list(mode = 'single'),
+                                         colnames = c('3. Theme'), 
+                                         rownames=F
+    )
+    output$concept <- DT::renderDataTable(concept,
+                                         options = list(
+                                             #lengthMenu = c(15, 25, 50), 
+                                             pageLength = 15, 
+                                             autoWidth=F, 
+                                             dom='ft',
+                                             scrollY = '400px', 
+                                             paging = FALSE, 
+                                             scrollX = TRUE,                                                
+                                             initComplete = JS(
+                                                 "function(settings, json) {",
+                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                 "}")
+                                         ),            
+                                         selection = list(mode = 'single'),
+                                         colnames = c('4. Variable concept'), 
+                                         rownames=F
+    )    
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
             cat("<b>Variable</b>",
@@ -507,10 +565,13 @@ server <- function(input,output,session) {
         cat("<font size=4> <b>Select a Variable</b></font>")
     })  
     output$theme_intro = renderPrint({
-        cat("<font size=4> <b>Select a Variable</b></font>")
+        if(input$theme1 == ''){
+        cat("")
+        }
+        else{cat("<font size=3> <b>Select a Variable</b></font>")} 
     })     
     output$intro1 = renderPrint({
-        cat("<font size=3> Quick select filters:</font>")
+         cat("<font size=3><b>Quick select filters:</b></font>")
     })     
     output$dwn_text = renderPrint({
         cat("<font size=3> <b>Download Project Codebook</b></font>")

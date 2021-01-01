@@ -73,7 +73,21 @@ tabdata <- x %>%
   )
 
 theme2 <- tabdata %>% filter(theme1 %in% 'test0') %>% group_by(theme2) %>% tally() %>% select(theme2)
+theme1 <- as.data.frame(tabdata$theme1)
+theme1 <- rbind(data.frame(theme1=tabdata$theme1), data.frame(theme1='--- Please select a theme ---')) 
 
+themes <- rbind(data.frame(
+  theme1='--- Please select a theme ---',
+  theme2='--- Please select a theme ---',
+  theme3='--- Please select a theme ---'),
+  data.frame(
+    theme1=tabdata$theme1,
+    theme2=tabdata$theme2,
+    theme3=tabdata$theme3
+  )
+) 
+
+theme1 <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
 
 test3 <- as.array(1)
 test3
