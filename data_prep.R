@@ -2,6 +2,9 @@
 library(dplyr)
 library(remotes)
 library(NestedMenu)
+install.packages("devtools")
+library(devtools)
+install_github("shinyTree/shinyTree")
 
 x <- read.csv2(
   "suf_view_short_202012151737.csv", 
@@ -89,7 +92,6 @@ themes <- rbind(data.frame(
 
 theme1 <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
 
-test3 <- as.array(1)
-test3
-
-test4 <- dplyr::pull(test, wave)
+themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
+  tally() %>% 
+  select(theme1, theme2, theme3, concept_text_long)

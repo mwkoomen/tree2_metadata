@@ -70,14 +70,15 @@ tabdata <- x %>%
            suf_name,
            format
     )
-theme1 <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
-theme2 <- tabdata %>% group_by(theme2) %>% tally() %>% select(theme2)
-theme3 <- tabdata %>% group_by(theme3) %>% tally() %>% select(theme3)
-concept <- tabdata %>% group_by(concept_text_long) %>% tally() %>% select(concept_text_long)
+gtheme <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
+themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
+    tally() %>% 
+    select(theme1, theme2, theme3, concept_text_long)
 ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
+                         menuItem("Overview", tabName = "home", icon = icon("home")),                         
                          menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
                          menuItem("Browse by Concepts / Themes", tabName = "theme", icon = icon("tree")),
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
@@ -130,7 +131,7 @@ ui <- dashboardPage(
                     .content-wrapper, .right-side {
                         background-color: #FFFFFF;
                     }                    
-                    #gridtext {
+                    #gridtext, #suf_gridtext {
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
@@ -139,7 +140,7 @@ ui <- dashboardPage(
                       border-radius: 25px; 
                       padding: 20px;
                     }
-                    #itemtext {
+                    #itemtext,#suf_itemtext {
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
@@ -148,7 +149,7 @@ ui <- dashboardPage(
                       border-radius: 25px; 
                       padding: 20px;                      
                     } 
-                    #meta {
+                    #meta, #suf_meta{
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
@@ -157,7 +158,7 @@ ui <- dashboardPage(
                       border-radius: 25px; 
                       padding: 20px;                      
                     }
-                    #meta1 {
+                    #meta1, #suf_meta1 {
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
@@ -166,22 +167,24 @@ ui <- dashboardPage(
                       border-radius: 25px; 
                       padding: 20px;                      
                     } 
-                    #response {
+                    #response, #suf_response {
                       color: black;
                       background: #FFFFFF;
                       font-family:calibri;
                       font-size: 18px;
                       font-style: none;
                     }
-                    #items { cursor: pointer; }
-                    #theme_items { cursor: pointer; }
-                    #suf_items { cursor: pointer; }
-                    #theme1 {cursor:pointer}
-                    #theme2 {cursor:pointer}
-                    #theme3 {cursor:pointer}
+                    #items,#theme_items,#suf_items,#theme1,#theme2,#theme3,#concept,#meta2{ cursor: pointer; }
+                    .shiny-output-error { visibility: hidden; }
+                    .shiny-output-error:before { visibility: hidden; }
                     "))
         ),        
         tabItems(
+            tabItem(tabName = "home",
+                    # mainPanel(
+                    #     img(src='data/LogoTREE_grün mit Schrift_links.jpg', align = "right")
+                    # )                    
+            ),
             tabItem(tabName = "exp",
                 sidebarLayout(
                     sidebarPanel(
@@ -233,20 +236,21 @@ ui <- dashboardPage(
                 )
             ),
             tabItem(tabName = 'theme',
-                    box(title = "1. Global level themes", status = "primary",height = "400" ,
+                    box(title = "1: Select global-themes", status = "primary",height = "400" ,
                         solidHeader = T, width="3",
                         DTOutput("theme1")),
-                    box( title = "1. Meso level themes", status = "primary", height = 
+                    box( title = "2: Select meso-themes", status = "primary", height = 
                              "400",width = "3",solidHeader = T, 
                          DTOutput("theme2")),
-                    box( title = "1. Sub level themes", status = "primary", height = 
+                    box( title = "3. Select sub-themes", status = "primary", height = 
                              "400",width = "3",solidHeader = T, 
                          DTOutput("theme3")),
-                    box( title = "1. Variable level concept", status = "primary", height = 
+                    box( title = "4: Select variable concepts", status = "primary", height = 
                               "400",width = "3",solidHeader = T, 
                           DTOutput("concept")),
-                    box( title = "Meta data", status = "primary", height = 
-                             "400",width = "12",solidHeader = T
+                    box( title = "", status = "primary", height = 
+                             "400",width = "12",solidHeader = F,
+                         DTOutput('meta2')
                          )
             ),            
             tabItem(tabName = 'suf',
@@ -262,78 +266,70 @@ ui <- dashboardPage(
                         br(),
                         DTOutput("suf_items")
                     ),
-                    mainPanel()
+                    mainPanel(
+                        htmlOutput('suf_meta'),
+                        br(),
+                        htmlOutput("suf_meta1"),
+                        br(),
+                        htmlOutput("suf_gridtext"),
+                        br(),
+                        htmlOutput('suf_itemtext'),
+                        br(),
+                        htmlOutput('suf_response'),
+                        br(),
+                        DTOutput("suf_values")
+                    )
                 )
             ),
             tabItem(tabName = "download",
-                #sidebarLayout(
-                    #sidebarPanel(
-                        br(),
-                        div(style="display: inline-block;vertical-align:top; width: 600px;
-                                    color: black;
-                                    background: #FFFFFF;
-                                    font-family:calibri;
-                                    font-size: 18px;
-                                    font-style: none;
-                                    border: 2px solid #AAAAAA;
-                                    border-radius: 25px;
-                                    padding: 20px;",
-                            htmlOutput("dwn_text"),
-                            HTML("<br>"),
-                            actionButton(inputId='dwn', label="Download .pdf", 
-                              icon = icon("arrow-alt-circle-down"), 
-                              onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")),
-                        br(),
-                        br(),
-                        br(),
-                        br(),
-                        div(style="display: inline-block;vertical-align:top; width: 600px;
-                                    color: black;
-                                    background: #FFFFFF;
-                                    font-family:calibri;
-                                    font-size: 18px;
-                                    font-style: none;
-                                    border: 2px solid #AAAAAA;
-                                    border-radius: 25px;
-                                    padding: 20px;",
-                            htmlOutput("dwn_text2"),
-                            HTML("<br>"),
-                            actionButton(inputId='dwn2', label="Download .pdf", 
-                                         icon = icon("arrow-alt-circle-down"), 
-                                         onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")),
-                        br(),
-                        br(),
-                        br(),
-                        br(),
-                        div(style="display: inline-block;vertical-align:top; width: 600px;
-                                    color: black;
-                                    background: #FFFFFF;
-                                    font-family:calibri;
-                                    font-size: 18px;
-                                    font-style: none;
-                                    border: 2px solid #AAAAAA;
-                                    border-radius: 25px;
-                                    padding: 20px;",
-                            htmlOutput("dwn_text3"),
-                            HTML("<br>"),
-                            actionButton(inputId='dwn3', label="Download .pdf", 
-                                         icon = icon("arrow-alt-circle-down"), 
-                                         onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';"))
-                # tags$style(".well {
-                     #             background-color:#FFFFFF;
-                     #             border-radius: 25px;
-                     #             padding: 20px;
-                     #             }")
-                    #),
-                    #mainPanel(
-                    #),
-                #)
+                    box(title = "Download full study codebook", status = "primary",height = "400" ,
+                        solidHeader = T, width="6",
+                             actionButton(inputId='dwn', label="Download .pdf", 
+                               icon = icon("arrow-alt-circle-down"), 
+                               onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
+                        ),
+                    box(title = "Download scaling documentation", status = "primary",height = "400" ,
+                        solidHeader = T, width="6",
+                        actionButton(inputId='dwn2', label="Download .pdf", 
+                                     icon = icon("arrow-alt-circle-down"), 
+                                     onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
+                        ),                    
+                    box(title = "Download weighting documentation", status = "primary",height = "400" ,
+                        solidHeader = T, width="6",
+                        actionButton(inputId='dwn3', label="Download .pdf", 
+                                     icon = icon("arrow-alt-circle-down"), 
+                                     onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
+                        )                     
+
             )
         )
     )
 )
 server <- function(input,output,session) {
-    
+    conceptd <- reactive({
+        req(input$theme3_rows_selected)
+        theme3d <- themes %>%
+            filter(theme3==theme3d()$theme3[input$theme3_rows_selected]) %>%
+            group_by(concept_text_long)%>%
+            tally()%>%
+            select(concept_text_long)
+    })
+    theme3d <- reactive({
+        req(input$theme2_rows_selected)
+        theme3d <- themes %>% 
+            filter(theme2==theme2d()$theme2[input$theme2_rows_selected]) %>% 
+            group_by(theme3)%>%
+            tally()%>%
+            select(theme3)
+    })     
+    theme2d <- reactive({
+        req(input$theme1_rows_selected)
+        theme2d <- themes %>% 
+            filter(theme1==gtheme$theme1[input$theme1_rows_selected]) %>% 
+                              group_by(theme2)%>%
+                              tally()%>%
+                              select(theme2)
+    })  
     data2 <- reactive({
              req(input$sufs)
              suf_data <- tabdata %>% 
@@ -344,7 +340,36 @@ server <- function(input,output,session) {
         req(input$format)
         df_data <- tabdata %>% 
             dplyr::filter(wave %in% input$wave & format %in% input$format)
-    })    
+    }) 
+    theme_data <- reactive({
+        req(input$theme1_rows_selected)
+        if (length(input$theme2_rows_selected)>0){
+            if (length(input$theme3_rows_selected)>0){
+                if (length(input$concept_rows_selected)>0){
+                    theme_data <- tabdata %>% 
+                        dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
+                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected] &
+                                      theme3 %in% theme3d()$theme3[input$theme3_rows_selected] &
+                                      concept_text_long %in% conceptd()$concept_text_long[input$concept_rows_selected])                    
+                }
+                else {
+                    theme_data <- tabdata %>% 
+                        dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
+                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected] &
+                                      theme3 %in% theme3d()$theme3[input$theme3_rows_selected])
+                }
+            }
+            else {
+                theme_data <- tabdata %>% 
+                    dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
+                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected])
+            }
+        }
+        else {
+            theme_data <- tabdata %>% 
+            dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected])
+        }
+    })     
     measurew <- reactive({
         req(input$items_rows_selected)
         mw <- x %>% 
@@ -354,13 +379,47 @@ server <- function(input,output,session) {
             select(wave) %>% 
             pull(wave)
     })
+    suf_measurew <- reactive({
+        req(input$suf_items_rows_selected)
+        mw <- x %>% 
+            filter(item_id==data2()$item_id[input$suf_items_rows_selected]) %>% 
+            group_by(wave) %>% 
+            tally() %>% 
+            select(wave) %>% 
+            pull(wave)
+    }) 
+    suf_resp_values <- reactive({
+        req(input$suf_items_rows_selected)
+        values <- x %>% 
+            dplyr::filter(item_id==data2()$item_id[input$suf_items_rows_selected] & 
+                              wave==data2()$wave[input$suf_items_rows_selected]) %>%
+            select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)  
+    })
     resp_values <- reactive({
         req(input$items_rows_selected)
         values <- x %>% 
             dplyr::filter(item_id==data()$item_id[input$items_rows_selected] & 
                               wave==data()$wave[input$items_rows_selected]) %>%
             select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
-    })    
+    }) 
+    output$meta2 <- DT::renderDataTable(theme_data()[c(3,9,5)],
+                                        options = list(
+                                            #lengthMenu = c(15, 25, 50), 
+                                            pageLength = 12, 
+                                            autoWidth=F, 
+                                            dom='ft',
+                                            scrollY = '400px', 
+                                            paging = FALSE, 
+                                            scrollX = TRUE,
+                                            initComplete = JS(
+                                                "function(settings, json) {",
+                                                "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                "}")
+                                        ),            
+                                        selection = list(mode = 'single'),
+                                        colnames = c('Variable', 'Grid text [EN]', 'Item text [EN]'), 
+                                        rownames=F
+    )    
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(
                                  #lengthMenu = c(15, 25, 50), 
@@ -397,7 +456,7 @@ server <- function(input,output,session) {
                                         colnames = c('Variable', 'Wave', 'Data collection'), 
                                         rownames=F
     )
-    output$theme1 <- DT::renderDataTable(theme1,
+    output$theme1 <- DT::renderDataTable(gtheme,
                                             options = list(
                                                 #lengthMenu = c(15, 25, 50), 
                                                 pageLength = 15, 
@@ -412,10 +471,10 @@ server <- function(input,output,session) {
                                                     "}")
                                             ),            
                                             selection = list(mode = 'single'),
-                                            colnames = c('1. Theme'), 
+                                            colnames = c('Global themes'), 
                                             rownames=F
     )
-    output$theme2 <- DT::renderDataTable(theme2,
+    output$theme2 <- DT::renderDataTable(theme2d(),
                                          options = list(
                                              #lengthMenu = c(15, 25, 50), 
                                              pageLength = 15, 
@@ -430,10 +489,10 @@ server <- function(input,output,session) {
                                                  "}")
                                          ),            
                                          selection = list(mode = 'single'),
-                                         colnames = c('2. Theme'), 
+                                         colnames = c('Meso-themes'), 
                                          rownames=F
     )    
-    output$theme3 <- DT::renderDataTable(theme3,
+    output$theme3 <- DT::renderDataTable(theme3d(),
                                          options = list(
                                              #lengthMenu = c(15, 25, 50), 
                                              pageLength = 15, 
@@ -448,10 +507,10 @@ server <- function(input,output,session) {
                                                  "}")
                                          ),            
                                          selection = list(mode = 'single'),
-                                         colnames = c('3. Theme'), 
+                                         colnames = c('Sub-themes'), 
                                          rownames=F
     )
-    output$concept <- DT::renderDataTable(concept,
+    output$concept <- DT::renderDataTable(conceptd(),
                                          options = list(
                                              #lengthMenu = c(15, 25, 50), 
                                              pageLength = 15, 
@@ -466,9 +525,98 @@ server <- function(input,output,session) {
                                                  "}")
                                          ),            
                                          selection = list(mode = 'single'),
-                                         colnames = c('4. Variable concept'), 
+                                         colnames = c('Variable concepts'), 
                                          rownames=F
     )    
+    output$suf_meta = renderPrint({
+        if(length(input$suf_items_rows_selected) > 0){
+            cat("<b>Variable</b>",
+                as.character(data2()$variable_name[input$suf_items_rows_selected]))
+        }
+        else{cat("<b>Variable</b>")} 
+    })
+    output$suf_meta1 = renderPrint({
+        if(length(input$suf_items_rows_selected) > 0){
+            cat("<table style=\"width:90%\">
+              <tr>
+                <th><b>Measured in waves</b></th>
+                <th><b>Variable type</b></th>
+                <th><b>Survey mode</b></th>
+                <th><b>Subsample</b></th>
+              </tr>
+              <tr>
+                <td>",suf_measurew(),"</td>
+                <td>",as.character(data2()$variable_type[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$mode_a[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$subsample[input$suf_items_rows_selected]),"</td>
+              </tr>
+            </table>"
+            )
+        }
+        else{cat("<b>Meta information</b>")
+        } 
+    })    
+    output$suf_gridtext = renderPrint({
+        if(length(input$suf_items_rows_selected) > 0){
+            cat("<b>Grid text</b>
+                    <br>
+                    <table style=\"width:90%\">
+                      <tr>
+                        <th>EN</th>
+                        <th>DE</th>
+                        <th>FR</th>
+                        <th>IT</th>
+                      </tr>
+              <tr>
+                <td>",as.character(data2()$grid_text_e[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$grid_text_d[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$grid_text_f[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$grid_text_i[input$suf_items_rows_selected]),"</td>
+              </tr>
+            </table>"
+            )
+        }
+        else{cat("<b>Grid</b>")} 
+    })
+    output$suf_itemtext = renderPrint({
+        if(length(input$suf_items_rows_selected) > 0){
+            cat("<b>Item text</b>
+                    <br>
+                    <table style=\"width:90%\">
+                      <tr>
+                        <th>EN</th>
+                        <th>DE</th>
+                        <th>FR</th>
+                        <th>IT</th>
+                      </tr>
+              <tr>
+                <td>",as.character(data2()$item_text_e[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$item_text_d[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$item_text_f[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$item_text_i[input$suf_items_rows_selected]),"</td>
+              </tr>
+            </table>"
+            )            
+        }
+        else{cat("<b>Item</b>")} 
+    })
+    output$suf_response = renderPrint({
+        if(length(input$suf_items_rows_selected) > 0){
+            cat("<b>Response values</b>")
+        }
+        else{cat("")} 
+    })    
+    output$suf_values = DT::renderDataTable(suf_resp_values(),
+                                        options=list(
+                                            dom='t',
+                                            initComplete = JS(
+                                                "function(settings, json) {",
+                                                "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+                                                "}")
+                                        ),
+                                        colnames = c('Value','Label [EN]','Label [DE]','Label [FR]','Label [IT]'), 
+                                        rownames=F)
+    
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
             cat("<b>Variable</b>",
@@ -559,10 +707,15 @@ server <- function(input,output,session) {
                                         rownames=F)
 
     output$exp_intro = renderPrint({
-            cat("<font size=4> <b>Select a Variable</b></font>")
+            cat("<font size=3> <b>Select a Variable</b></font>")
     }) 
     output$suf_intro = renderPrint({
-        cat("<font size=4> <b>Select a Variable</b></font>")
+        if(input$sufs == ''){
+            cat("")
+        }    
+        else {
+        cat("<font size=3> <b>Select a Variable</b></font>")
+        }
     })  
     output$theme_intro = renderPrint({
         if(input$theme1 == ''){
@@ -573,15 +726,6 @@ server <- function(input,output,session) {
     output$intro1 = renderPrint({
          cat("<font size=3><b>Quick select filters:</b></font>")
     })     
-    output$dwn_text = renderPrint({
-        cat("<font size=3> <b>Download Project Codebook</b></font>")
-    })
-    output$dwn_text2 = renderPrint({
-        cat("<font size=3> <b>Download Weighting Documentation</b></font>")
-    })
-    output$dwn_text3 = renderPrint({
-        cat("<font size=3> <b>Download Scaling Documentation</b></font>")
-    })      
 }
 
 # Run the application 
