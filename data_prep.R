@@ -95,3 +95,7 @@ theme1 <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
 themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
   tally() %>% 
   select(theme1, theme2, theme3, concept_text_long)
+
+
+
+test <- list(a=list(1,2), b=list(3,4))

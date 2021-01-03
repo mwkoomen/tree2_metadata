@@ -4,8 +4,9 @@ library(shinydashboard)
 library(DT)
 library(dplyr)
 library(shinycssloaders)
-library(dashboardthemes)
-library(shinyWidgets)
+library(shinyTree)
+#library(dashboardthemes)
+#library(shinyWidgets)
 
 x <- read.csv2(
     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/test.csv",
@@ -80,6 +81,7 @@ ui <- dashboardPage(
                      sidebarMenu(
                          menuItem("Overview", tabName = "home", icon = icon("home")),                         
                          menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
+                         menuItem("Browse themes (TREE)", tabName = "themetree", icon=icon("tree")),
                          menuItem("Browse by Concepts / Themes", tabName = "theme", icon = icon("tree")),
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
                          menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
@@ -235,6 +237,10 @@ ui <- dashboardPage(
                     )
                 )
             ),
+            tabItem(tabName = "themetree",
+                    shinyTree("tree"), 
+                    verbatimTextOutput("treeprint")
+            ),
             tabItem(tabName = 'theme',
                     box(title = "1: Select global-themes", status = "primary",height = "400" ,
                         solidHeader = T, width="3",
@@ -282,19 +288,19 @@ ui <- dashboardPage(
                 )
             ),
             tabItem(tabName = "download",
-                    box(title = "Download full study codebook", status = "primary",height = "400" ,
+                    box(title = "Download full study codebook", status = "primary",height = "300" ,
                         solidHeader = T, width="6",
                              actionButton(inputId='dwn', label="Download .pdf", 
                                icon = icon("arrow-alt-circle-down"), 
                                onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
                         ),
-                    box(title = "Download scaling documentation", status = "primary",height = "400" ,
+                    box(title = "Download scaling documentation", status = "primary",height = "300" ,
                         solidHeader = T, width="6",
                         actionButton(inputId='dwn2', label="Download .pdf", 
                                      icon = icon("arrow-alt-circle-down"), 
                                      onclick ="location.href='https://github.com/mwkoomen/tree2_metadata/raw/main/data/Test.pdf';")
                         ),                    
-                    box(title = "Download weighting documentation", status = "primary",height = "400" ,
+                    box(title = "Download weighting documentation", status = "primary",height = "300" ,
                         solidHeader = T, width="6",
                         actionButton(inputId='dwn3', label="Download .pdf", 
                                      icon = icon("arrow-alt-circle-down"), 
@@ -306,6 +312,20 @@ ui <- dashboardPage(
     )
 )
 server <- function(input,output,session) {
+    output$tree <- renderTree({
+        list(
+            Folder1 = list(File1.1 = "a", File1.2 = "b"),
+            Folder2 = list(
+                Subfolder2.1 = list(File2.1.1 = "c", File2.1.2 = "d"
+                                    , File2.1.3="e"),
+                Subfolder2.2 = list(File2.2.1 = "f", File2.2.2 = "g"),
+                File2.3 = "h"
+            )
+        )    
+    })
+    output$treeprint <- renderPrint({
+        print(get_selected(input$tree))
+    })   
     conceptd <- reactive({
         req(input$theme3_rows_selected)
         theme3d <- themes %>%
@@ -405,7 +425,7 @@ server <- function(input,output,session) {
     output$meta2 <- DT::renderDataTable(theme_data()[c(3,9,5)],
                                         options = list(
                                             #lengthMenu = c(15, 25, 50), 
-                                            pageLength = 12, 
+                                            pageLength = 8, 
                                             autoWidth=F, 
                                             dom='ft',
                                             scrollY = '400px', 
@@ -423,7 +443,7 @@ server <- function(input,output,session) {
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(
                                  #lengthMenu = c(15, 25, 50), 
-                                 pageLength = 12, 
+                                 pageLength = 8, 
                                  autoWidth=F, 
                                  dom='ft',
                                  scrollY = '400px', 
