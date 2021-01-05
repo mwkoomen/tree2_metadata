@@ -72,6 +72,31 @@ tabdata <- x %>%
            format
     )
 gtheme <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
+t1 <- x2 %>% dplyr::group_by(theme_l1)%>%tally()%>%select(theme_l1)
+theme1 <- as.list(t1$theme_l1)
+theme_list <- list()
+for (l in theme1){
+    z <- x2 %>% dplyr::filter(theme_l1 == l) %>%
+        group_by(theme_l2) %>% tally() %>% select(theme_l2)
+    d <- as.list(z$theme_l2)
+    u <- list()
+    for (r in d){
+        m <- x2 %>% dplyr::filter(theme_l2 == r) %>%
+            group_by(theme_l3) %>% tally() %>% select(theme_l3) 
+        h <- as.list(m$theme_l3)
+        i <- list()
+        for (n in h){
+            v <- x2 %>% dplyr::filter(theme_l3 == n) %>%
+                group_by(item_id) %>% tally() %>% select(item_id)
+            t <- as.list(v$item_id)
+            i[[n]] <- t
+        }
+        u[[r]] <- i 
+    }
+    theme_list[[l]] <- u 
+}
+rm(u,v,w,z,e,l,n,r,k,m,p,t,d,h,i,j)
+
 themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
     tally() %>% 
     select(theme1, theme2, theme3, concept_text_long)
@@ -81,8 +106,8 @@ ui <- dashboardPage(
                      sidebarMenu(
                          menuItem("Overview", tabName = "home", icon = icon("home")),                         
                          menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
-                         menuItem("Browse themes (TREE)", tabName = "themetree", icon=icon("tree")),
-                         menuItem("Browse by Concepts / Themes", tabName = "theme", icon = icon("tree")),
+                         menuItem("Browse themes (Tree)", tabName = "themetree", icon=icon("tree")),
+                         menuItem("Browse themes (Box)", tabName = "theme", icon = icon("tree")),
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
                          menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
                      )
@@ -313,15 +338,7 @@ ui <- dashboardPage(
 )
 server <- function(input,output,session) {
     output$tree <- renderTree({
-        list(
-            Folder1 = list(File1.1 = "a", File1.2 = "b"),
-            Folder2 = list(
-                Subfolder2.1 = list(File2.1.1 = "c", File2.1.2 = "d"
-                                    , File2.1.3="e"),
-                Subfolder2.2 = list(File2.2.1 = "f", File2.2.2 = "g"),
-                File2.3 = "h"
-            )
-        )    
+        theme_list
     })
     output$treeprint <- renderPrint({
         print(get_selected(input$tree))
