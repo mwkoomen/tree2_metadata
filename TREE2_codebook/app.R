@@ -13,6 +13,11 @@ x <- read.csv2(
     sep=',',
     header = T,
     encoding = "UTF-8")
+x2 <- read.csv2(
+    "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_themes.csv",
+    sep=',', 
+    header = T,
+    encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
@@ -95,7 +100,6 @@ for (l in theme1){
     }
     theme_list[[l]] <- u 
 }
-rm(u,v,w,z,e,l,n,r,k,m,p,t,d,h,i,j)
 
 themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
     tally() %>% 
@@ -193,7 +197,16 @@ ui <- dashboardPage(
                       font-style: none;
                       border-radius: 25px; 
                       padding: 20px;                      
-                    } 
+                    }
+                    #tt_intro {
+                      color: black;
+                      background: #F0EFEF;
+                      font-family:calibri;
+                      font-size: 18px;
+                      font-style: none;
+                      border-radius: 20px; 
+                      padding: 20px;                      
+                    }                    
                     #response, #suf_response {
                       color: black;
                       background: #FFFFFF;
@@ -263,7 +276,9 @@ ui <- dashboardPage(
                 )
             ),
             tabItem(tabName = "themetree",
-                    shinyTree("tree"), 
+                    htmlOutput("tt_intro"),
+                    br(),
+                    shinyTree("tree", wholerow = T, theme = "default", themeIcons = T, themeDots = T), 
                     verbatimTextOutput("treeprint")
             ),
             tabItem(tabName = 'theme',
@@ -341,8 +356,18 @@ server <- function(input,output,session) {
         theme_list
     })
     output$treeprint <- renderPrint({
-        print(get_selected(input$tree))
-    })   
+        print(length(tree_a()[tree_a()==F]))
+        #print(tree_a())
+        print(tree_s())
+    }) 
+    tree_s <- reactive({
+        req(input$tree)
+        s <- unlist(get_selected(input$tree))
+    })
+    tree_a <- reactive({
+        req(input$tree)
+        a <- grepl("TRUE",unlist(lapply(tree_s(), attributes)))
+    })    
     conceptd <- reactive({
         req(input$theme3_rows_selected)
         theme3d <- themes %>%
@@ -746,6 +771,9 @@ server <- function(input,output,session) {
     output$exp_intro = renderPrint({
             cat("<font size=3> <b>Select a Variable</b></font>")
     }) 
+    output$tt_intro = renderPrint({
+        cat("<b>Select a Theme</b>")
+    })     
     output$suf_intro = renderPrint({
         if(input$sufs == ''){
             cat("")
