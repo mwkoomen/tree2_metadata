@@ -1,20 +1,21 @@
 #data load codebook
 library(dplyr)
 library(remotes)
-library(NestedMenu)
-library(D3partitionR)
+#library(NestedMenu)
+#library(D3partitionR)
 library(tibble)
 library(stringr)
 library(DBI)
+library(utf8)
 
-con <- dbConnect(odbc::odbc(), "PostgreSQL35W", timeout = 10)
-x <- dbGetQuery(con, "select * from tree2_metadaten.suf_view_short;")
+# con <- dbConnect(odbc::odbc(), "PostgreSQL35W", timeout = 10)
+# x <- dbGetQuery(con, "select * from tree2_metadaten.suf_view_short;")
 #install.packages("devtools")
 #library(devtools)
 #install_github("shinyTree/shinyTree")
 
 x <- read.csv2(
-  "suf_view_short_202012151737.csv", 
+  "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_view_short_202101082214.csv", 
   sep=',', 
   header = T,
   encoding = "UTF-8")
@@ -56,4 +57,4 @@ for (l in theme1){
 }
 rm(u,v,w,z,e,l,n,r,k,m,p,t,d,h,i,j)
 
-
+test <- x %>% filter(format == 2)

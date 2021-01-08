@@ -14,9 +14,6 @@ library(shinyTree)
 #     header = T,
 #     encoding = "UTF-8")
 tabdata <- x %>%
-    filter(item_text_e != "n/a" &
-            grid_text_e != "n/a" &  
-           item_text_e != "") %>%
     group_by(variable_name,
              theme_l1,
              theme_l2,
@@ -100,9 +97,9 @@ ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Overview", tabName = "home", icon = icon("home")), 
-                         menuItem("Browse themes (Tree)", tabName = "themetree", icon=icon("tree")),
+                         menuItem("Overview", tabName = "home", icon = icon("home")),
                          menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
+                         menuItem("Browse themes (Tree)", tabName = "themetree", icon=icon("tree")),
                          menuItem("Browse themes (Box)", tabName = "theme", icon = icon("tree")),
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
                          menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
@@ -158,7 +155,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
-                      font-size: 18px;
+                      font-size: 14px;
                       font-style: none;
                       border-radius: 25px; 
                       padding: 20px;
@@ -167,7 +164,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
-                      font-size: 18px;
+                      font-size: 14px;
                       font-style: none;
                       border-radius: 25px; 
                       padding: 20px;                      
@@ -176,7 +173,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
-                      font-size: 20px;
+                      font-size: 18px;
                       font-style: none;
                       border-radius: 25px; 
                       padding: 20px;                      
@@ -185,7 +182,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #F0EFEF;
                       font-family:calibri;
-                      font-size: 18px;
+                      font-size: 14px;
                       font-style: none;
                       border-radius: 25px; 
                       padding: 20px;                      
@@ -206,7 +203,10 @@ ui <- dashboardPage(
                       font-size: 18px;
                       font-style: none;
                     }
-                    #items,#theme_items,#suf_items,#theme1,#theme2,#theme3,#concept,#meta2{ cursor: pointer; }
+                    #items,#theme_items,#suf_items,#theme1,#theme2,#theme3,#concept,#meta2{ 
+                    cursor: pointer; 
+                    font-size: 12px;
+                    }
                     .shiny-output-error { visibility: hidden; }
                     .shiny-output-error:before { visibility: hidden; }
                     "))
@@ -275,20 +275,20 @@ ui <- dashboardPage(
                     DTOutput("tree_data")
             ),
             tabItem(tabName = 'theme',
-                    box(title = "1: Select global-themes", status = "primary",height = "400" ,
+                    box(title = "1: Select global-themes", status = "primary",height = "500" ,
                         solidHeader = T, width="3",
                         DTOutput("theme1")),
                     box( title = "2: Select meso-themes", status = "primary", height = 
-                             "400",width = "3",solidHeader = T, 
+                             "500",width = "3",solidHeader = T, 
                          DTOutput("theme2")),
                     box( title = "3. Select sub-themes", status = "primary", height = 
-                             "400",width = "3",solidHeader = T, 
+                             "500",width = "3",solidHeader = T, 
                          DTOutput("theme3")),
                     box( title = "4: Select variable concepts", status = "primary", height = 
-                              "400",width = "3",solidHeader = T, 
+                              "500",width = "3",solidHeader = T, 
                           DTOutput("concept")),
                     box( title = "", status = "primary", height = 
-                             "400",width = "12",solidHeader = F,
+                             "250",width = "12",solidHeader = F,
                          DTOutput('meta2')
                          )
             ),            
@@ -455,15 +455,17 @@ server <- function(input,output,session) {
         values <- x %>% 
             dplyr::filter(item_id==data()$item_id[input$items_rows_selected] & 
                               wave==data()$wave[input$items_rows_selected]) %>%
+            group_by(response_value, value_text_e, value_text_d, value_text_f, value_text_i) %>% 
+            tally() %>%
             select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
     }) 
     output$meta2 <- DT::renderDataTable(theme_data()[c(3,9,5)],
                                         options = list(
                                             #lengthMenu = c(15, 25, 50), 
-                                            pageLength = 8, 
+                                            pageLength = 6, 
                                             autoWidth=F, 
                                             dom='ft',
-                                            scrollY = '400px', 
+                                            scrollY = '250px', 
                                             paging = FALSE, 
                                             scrollX = TRUE,
                                             initComplete = JS(
@@ -495,11 +497,10 @@ server <- function(input,output,session) {
     # )    
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(
-                                 #lengthMenu = c(15, 25, 50), 
-                                 pageLength = 8, 
+                                 pageLength = 12, 
                                  autoWidth=F, 
                                  dom='ft',
-                                 scrollY = '400px', 
+                                 scrollY = '500px', 
                                  paging = FALSE, 
                                  scrollX = TRUE,
                                  initComplete = JS(
@@ -535,7 +536,7 @@ server <- function(input,output,session) {
                                                 pageLength = 15, 
                                                 autoWidth=F, 
                                                 dom='ft',
-                                                scrollY = '400px', 
+                                                scrollY = '550px', 
                                                 paging = FALSE, 
                                                 scrollX = TRUE,                                                
                                                 initComplete = JS(
@@ -553,7 +554,7 @@ server <- function(input,output,session) {
                                              pageLength = 15, 
                                              autoWidth=F, 
                                              dom='ft',
-                                             scrollY = '400px', 
+                                             scrollY = '550px', 
                                              paging = FALSE, 
                                              scrollX = TRUE,                                                
                                              initComplete = JS(
@@ -571,7 +572,7 @@ server <- function(input,output,session) {
                                              pageLength = 15, 
                                              autoWidth=F, 
                                              dom='ft',
-                                             scrollY = '400px', 
+                                             scrollY = '550px', 
                                              paging = FALSE, 
                                              scrollX = TRUE,                                                
                                              initComplete = JS(
@@ -585,11 +586,10 @@ server <- function(input,output,session) {
     )
     output$concept <- DT::renderDataTable(conceptd(),
                                          options = list(
-                                             #lengthMenu = c(15, 25, 50), 
                                              pageLength = 15, 
                                              autoWidth=F, 
                                              dom='ft',
-                                             scrollY = '400px', 
+                                             scrollY = '550px', 
                                              paging = FALSE, 
                                              scrollX = TRUE,                                                
                                              initComplete = JS(
@@ -682,6 +682,11 @@ server <- function(input,output,session) {
     output$suf_values = DT::renderDataTable(suf_resp_values(),
                                         options=list(
                                             dom='t',
+                                            pageLength = 15, 
+                                            autoWidth = F,
+                                            scrollY = '400px', 
+                                            paging = FALSE, 
+                                            scrollX = TRUE,                                              
                                             initComplete = JS(
                                                 "function(settings, json) {",
                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
@@ -771,6 +776,11 @@ server <- function(input,output,session) {
     output$values = DT::renderDataTable(resp_values(),
                                         options=list(
                                             dom='t',
+                                            pageLength=10,
+                                            autoWidth = F,
+                                            scrollY = '400px', 
+                                            paging = FALSE, 
+                                            scrollX = TRUE,
                                             initComplete = JS(
                                                 "function(settings, json) {",
                                                 "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
