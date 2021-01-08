@@ -8,25 +8,19 @@ library(shinyTree)
 #library(dashboardthemes)
 #library(shinyWidgets)
 
-x <- read.csv2(
-    "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/test.csv",
-    sep=',',
-    header = T,
-    encoding = "UTF-8")
-x2 <- read.csv2(
-    "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_themes.csv",
-    sep=',', 
-    header = T,
-    encoding = "UTF-8")
+# x <- read.csv2(
+#     "https://raw.githubusercontent.com/mwkoomen/tree2_metadata/main/data/test.csv",
+#     sep=',',
+#     header = T,
+#     encoding = "UTF-8")
 tabdata <- x %>%
     filter(item_text_e != "n/a" &
             grid_text_e != "n/a" &  
            item_text_e != "") %>%
     group_by(variable_name,
-             theme1,
-             theme2,
-             theme3,
-             concept_text,
+             theme_l1,
+             theme_l2,
+             theme_l3,
              concept_text_long,
              suf_name,
              item_id, 
@@ -68,30 +62,29 @@ tabdata <- x %>%
            module,
            subsample,
            variable_type,
-           theme1,
-           theme2,
-           theme3,
-           concept_text,
+           theme_l1,
+           theme_l2,
+           theme_l3,
            concept_text_long,
            suf_name,
            format
     )
-gtheme <- tabdata %>% group_by(theme1) %>% tally() %>% select(theme1)
-t1 <- x2 %>% dplyr::group_by(theme_l1)%>%tally()%>%select(theme_l1)
+gtheme <- tabdata %>% group_by(theme_l1) %>% tally() %>% select(theme_l1)
+t1 <- x %>% dplyr::group_by(theme_l1)%>%tally()%>%select(theme_l1)
 theme1 <- as.list(t1$theme_l1)
 theme_list <- list()
 for (l in theme1){
-    z <- x2 %>% dplyr::filter(theme_l1 == l) %>%
+    z <- x %>% dplyr::filter(theme_l1 == l) %>%
         group_by(theme_l2) %>% tally() %>% select(theme_l2)
     d <- as.list(z$theme_l2)
     u <- list()
     for (r in d){
-        m <- x2 %>% dplyr::filter(theme_l2 == r) %>%
+        m <- x %>% dplyr::filter(theme_l2 == r) %>%
             group_by(theme_l3) %>% tally() %>% select(theme_l3) 
         h <- as.list(m$theme_l3)
         i <- list()
         for (n in h){
-            v <- x2 %>% dplyr::filter(theme_l3 == n) %>%
+            v <- x %>% dplyr::filter(theme_l3 == n) %>%
                 group_by(item_id) %>% tally() %>% select(item_id)
             t <- as.list(v$item_id)
             i[[n]] <- t
@@ -100,17 +93,16 @@ for (l in theme1){
     }
     theme_list[[l]] <- u 
 }
-
-themes <- tabdata %>% group_by(theme1, theme2, theme3, concept_text_long) %>% 
+themes <- tabdata %>% group_by(theme_l1, theme_l2, theme_l3, concept_text_long) %>% 
     tally() %>% 
-    select(theme1, theme2, theme3, concept_text_long)
+    select(theme_l1, theme_l2, theme_l3, concept_text_long)
 ui <- dashboardPage(
     dashboardHeader(title="TREE2 Codebook"),
     dashboardSidebar(
                      sidebarMenu(
-                         menuItem("Overview", tabName = "home", icon = icon("home")),                         
-                         menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
+                         menuItem("Overview", tabName = "home", icon = icon("home")), 
                          menuItem("Browse themes (Tree)", tabName = "themetree", icon=icon("tree")),
+                         menuItem("Browse ALL Variables", tabName = "exp", icon = icon("th")),
                          menuItem("Browse themes (Box)", tabName = "theme", icon = icon("tree")),
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
                          menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
@@ -279,7 +271,8 @@ ui <- dashboardPage(
                     htmlOutput("tt_intro"),
                     br(),
                     shinyTree("tree", wholerow = T, theme = "default", themeIcons = T, themeDots = T), 
-                    verbatimTextOutput("treeprint")
+                    verbatimTextOutput("treeprint"),
+                    DTOutput("tree_data")
             ),
             tabItem(tabName = 'theme',
                     box(title = "1: Select global-themes", status = "primary",height = "400" ,
@@ -371,7 +364,7 @@ server <- function(input,output,session) {
     conceptd <- reactive({
         req(input$theme3_rows_selected)
         theme3d <- themes %>%
-            filter(theme3==theme3d()$theme3[input$theme3_rows_selected]) %>%
+            filter(theme_l3==theme3d()$theme_l3[input$theme3_rows_selected]) %>%
             group_by(concept_text_long)%>%
             tally()%>%
             select(concept_text_long)
@@ -379,18 +372,18 @@ server <- function(input,output,session) {
     theme3d <- reactive({
         req(input$theme2_rows_selected)
         theme3d <- themes %>% 
-            filter(theme2==theme2d()$theme2[input$theme2_rows_selected]) %>% 
-            group_by(theme3)%>%
+            filter(theme_l2==theme2d()$theme_l2[input$theme2_rows_selected]) %>% 
+            group_by(theme_l3)%>%
             tally()%>%
-            select(theme3)
+            select(theme_l3)
     })     
     theme2d <- reactive({
         req(input$theme1_rows_selected)
         theme2d <- themes %>% 
-            filter(theme1==gtheme$theme1[input$theme1_rows_selected]) %>% 
-                              group_by(theme2)%>%
+            filter(theme_l1==gtheme$theme_l1[input$theme1_rows_selected]) %>% 
+                              group_by(theme_l2)%>%
                               tally()%>%
-                              select(theme2)
+                              select(theme_l2)
     })  
     data2 <- reactive({
              req(input$sufs)
@@ -409,27 +402,27 @@ server <- function(input,output,session) {
             if (length(input$theme3_rows_selected)>0){
                 if (length(input$concept_rows_selected)>0){
                     theme_data <- tabdata %>% 
-                        dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
-                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected] &
-                                      theme3 %in% theme3d()$theme3[input$theme3_rows_selected] &
+                        dplyr::filter(theme_l1 %in% gtheme$theme_l1[input$theme1_rows_selected] &
+                                      theme_l2 %in% theme2d()$theme_l2[input$theme2_rows_selected] &
+                                      theme_l3 %in% theme3d()$theme_l3[input$theme3_rows_selected] &
                                       concept_text_long %in% conceptd()$concept_text_long[input$concept_rows_selected])                    
                 }
                 else {
                     theme_data <- tabdata %>% 
-                        dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
-                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected] &
-                                      theme3 %in% theme3d()$theme3[input$theme3_rows_selected])
+                        dplyr::filter(theme_l1 %in% gtheme$theme_l1[input$theme1_rows_selected] &
+                                      theme_l2 %in% theme2d()$theme_l2[input$theme2_rows_selected] &
+                                      theme_l3 %in% theme3d()$theme_l3[input$theme3_rows_selected])
                 }
             }
             else {
                 theme_data <- tabdata %>% 
-                    dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected] &
-                                      theme2 %in% theme2d()$theme2[input$theme2_rows_selected])
+                    dplyr::filter(theme_l1 %in% gtheme$theme_l1[input$theme1_rows_selected] &
+                                      theme_l2 %in% theme2d()$theme_l2[input$theme2_rows_selected])
             }
         }
         else {
             theme_data <- tabdata %>% 
-            dplyr::filter(theme1 %in% gtheme$theme1[input$theme1_rows_selected])
+            dplyr::filter(theme_l1 %in% gtheme$theme_l1[input$theme1_rows_selected])
         }
     })     
     measurew <- reactive({
@@ -481,7 +474,25 @@ server <- function(input,output,session) {
                                         selection = list(mode = 'single'),
                                         colnames = c('Variable', 'Grid text [EN]', 'Item text [EN]'), 
                                         rownames=F
-    )    
+    )
+    # output$tree_data <- DT::renderDataTable(xxx()[c(3,9,5)],
+    #                                     options = list(
+    #                                         #lengthMenu = c(15, 25, 50), 
+    #                                         pageLength = 8, 
+    #                                         autoWidth=F, 
+    #                                         dom='ft',
+    #                                         scrollY = '400px', 
+    #                                         paging = FALSE, 
+    #                                         scrollX = TRUE,
+    #                                         initComplete = JS(
+    #                                             "function(settings, json) {",
+    #                                             "$(this.api().table().header()).css({'background-color': '#7F7F7F', 'color': '#fff'});",
+    #                                             "}")
+    #                                     ),            
+    #                                     selection = list(mode = 'single'),
+    #                                     colnames = c('Variable', 'Grid text [EN]', 'Item text [EN]'), 
+    #                                     rownames=F
+    # )    
     output$items <- DT::renderDataTable(data()[c(3,4,14)],
                              options = list(
                                  #lengthMenu = c(15, 25, 50), 
