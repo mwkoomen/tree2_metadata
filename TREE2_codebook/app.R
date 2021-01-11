@@ -13,8 +13,11 @@ library(shinyTree)
 #     sep=',',
 #     header = T,
 #     encoding = "UTF-8")
+x <- x %>% mutate(value_text_e=ifelse(response_value==-999999, response_unit, value_text_e)) %>%
+    mutate(response_value=ifelse(response_value==-999999, '', response_value))
 tabdata <- x %>%
     group_by(variable_name,
+             variable_label,
              theme_l1,
              theme_l2,
              theme_l3,
@@ -64,7 +67,8 @@ tabdata <- x %>%
            theme_l3,
            concept_text_long,
            suf_name,
-           format
+           format,
+           variable_label
     )
 gtheme <- tabdata %>% group_by(theme_l1) %>% tally() %>% select(theme_l1)
 t1 <- x %>% dplyr::group_by(theme_l1)%>%tally()%>%select(theme_l1)
@@ -604,7 +608,9 @@ server <- function(input,output,session) {
     output$suf_meta = renderPrint({
         if(length(input$suf_items_rows_selected) > 0){
             cat("<b>Variable</b>",
-                as.character(data2()$variable_name[input$suf_items_rows_selected]))
+                as.character(data2()$variable_name[input$suf_items_rows_selected]),
+                "<br><b>Variable label</b>",
+                as.character(data2()$variable_label[input$suf_items_rows_selected]))
         }
         else{cat("<b>Variable</b>")} 
     })
@@ -697,8 +703,11 @@ server <- function(input,output,session) {
     
     output$meta = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<b>Variable</b>",
-                  as.character(data()$variable_name[input$items_rows_selected]))
+            cat("<b>",
+                  as.character(data()$variable_name[input$items_rows_selected]),
+                "</b><br>",
+                as.character(data()$variable_label[input$items_rows_selected])                
+                )
         }
         else{cat("<b>Variable</b>")} 
     })
