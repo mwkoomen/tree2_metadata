@@ -15,10 +15,14 @@ library(utf8)
 #install_github("shinyTree/shinyTree")
 
 x <- read.csv2(
-  "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_view_short_202101112320.csv", 
+  "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_view_short_202101122256.csv", 
   sep=',', 
   header = T,
   encoding = "UTF-8")
+# x <- x %>% arrange(suf_name, variable_name, response_value) %>%
+#   mutate(response_value=as.character(response_value))
+
+
 
 x2 <- read.csv2(
   "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_themes.csv",
@@ -58,8 +62,11 @@ for (l in theme1){
 rm(u,v,w,z,e,l,n,r,k,m,p,t,d,h,i,j)
 
 test <- x %>% filter(format == 2)
+
+x$response_value <- toString(x$response_value)
+
+
 x <- x %>% mutate(value_text_e=ifelse(response_value==-999999, response_unit, value_text_e)) %>%
   mutate(response_value=ifelse(response_value==-999999, '', response_value))
                   
                   
-                  %>% select(everything())

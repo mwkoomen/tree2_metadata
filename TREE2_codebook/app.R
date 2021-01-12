@@ -13,8 +13,8 @@ library(shinyTree)
 #     sep=',',
 #     header = T,
 #     encoding = "UTF-8")
-x <- x %>% mutate(value_text_e=ifelse(response_value==-999999, response_unit, value_text_e)) %>%
-    mutate(response_value=ifelse(response_value==-999999, '', response_value))
+x <- x %>% mutate(value_text_e=ifelse(response_value==-999999, response_unit, value_text_e))  %>% 
+    mutate(response_value=ifelse(response_value==-999999, NA, response_value))
 tabdata <- x %>%
     group_by(variable_name,
              variable_label,
@@ -41,6 +41,8 @@ tabdata <- x %>%
              module,
              subsample,
              variable_type,
+             variable_type_a,
+             response_unit,
              format) %>%
     tally() %>%
     select(item_id,
@@ -62,13 +64,15 @@ tabdata <- x %>%
            module,
            subsample,
            variable_type,
+           variable_type_a,
            theme_l1,
            theme_l2,
            theme_l3,
            concept_text_long,
            suf_name,
            format,
-           variable_label
+           variable_label,
+           response_unit
     )
 gtheme <- tabdata %>% group_by(theme_l1) %>% tally() %>% select(theme_l1)
 t1 <- x %>% dplyr::group_by(theme_l1)%>%tally()%>%select(theme_l1)
@@ -108,14 +112,8 @@ ui <- dashboardPage(
                          menuItem("Browse by Data / SUF file", tabName = 'suf', icon=icon('clone')),
                          menuItem("Download full documentation", tabName = "download", icon = icon("arrow-alt-circle-down"))
                      )
-                     # materialSwitch(inputId = "w0", label = tags$span("Wave 0", style = "color: black;"), status = "success", value=T),
-                     # materialSwitch(inputId = "w1", label = tags$span("Wave 1", style = "color: black;"), status = "success", value=T),
-                     # materialSwitch(inputId = "w2", label = tags$span("Wave 2", style = "color: black;"), status = "success", value=T)
     ),
     dashboardBody(    
-        # shinyDashboardThemes(
-        # theme = "onenote"
-        # ),
         tags$head(
             tags$style(HTML("
                     .box.box-solid.box-primary>.box-header {
@@ -204,7 +202,7 @@ ui <- dashboardPage(
                       color: black;
                       background: #FFFFFF;
                       font-family:calibri;
-                      font-size: 18px;
+                      font-size: 14px;
                       font-style: none;
                     }
                     #items,#theme_items,#suf_items,#theme1,#theme2,#theme3,#concept,#meta2{ 
@@ -354,7 +352,6 @@ server <- function(input,output,session) {
     })
     output$treeprint <- renderPrint({
         print(length(tree_a()[tree_a()==F]))
-        #print(tree_a())
         print(tree_s())
     }) 
     tree_s <- reactive({
@@ -460,12 +457,12 @@ server <- function(input,output,session) {
             dplyr::filter(item_id==data()$item_id[input$items_rows_selected] & 
                               wave==data()$wave[input$items_rows_selected]) %>%
             group_by(response_value, value_text_e, value_text_d, value_text_f, value_text_i) %>% 
-            tally() %>%
+            tally() %>% 
+            arrange(response_value) %>%
             select(response_value, value_text_e, value_text_d, value_text_f, value_text_i)
     }) 
     output$meta2 <- DT::renderDataTable(theme_data()[c(3,9,5)],
                                         options = list(
-                                            #lengthMenu = c(15, 25, 50), 
                                             pageLength = 6, 
                                             autoWidth=F, 
                                             dom='ft',
@@ -621,12 +618,14 @@ server <- function(input,output,session) {
                 <th><b>Measured in waves</b></th>
                 <th><b>Variable type</b></th>
                 <th><b>Survey mode</b></th>
+                <th><b>Module</b></th>
                 <th><b>Subsample</b></th>
               </tr>
               <tr>
                 <td>",suf_measurew(),"</td>
                 <td>",as.character(data2()$variable_type[input$suf_items_rows_selected]),"</td>
                 <td>",as.character(data2()$mode_a[input$suf_items_rows_selected]),"</td>
+                <td>",as.character(data2()$module[input$suf_items_rows_selected]),"</td>
                 <td>",as.character(data2()$subsample[input$suf_items_rows_selected]),"</td>
               </tr>
             </table>"
@@ -713,17 +712,19 @@ server <- function(input,output,session) {
     })
     output$meta1 = renderPrint({
         if(length(input$items_rows_selected) > 0){
-            cat("<table style=\"width:90%\">
+            cat("<table style=\"width:100%\">
               <tr>
-                <th><b>Measured in waves</b></th>
-                <th><b>Variable type</b></th>
-                <th><b>Survey mode</b></th>
-                <th><b>Subsample</b></th>
+                <th style=\"width:20%\"><b>Measured in waves</b></th>
+                <th style=\"width:20%\"><b>Variable type</b></th>
+                <th style=\"width:20%\"><b>Survey mode</b></th>
+                <th style=\"width:20%\"><b>Module</b></th>
+                <th style=\"width:20%\"><b>Subsample</b></th>
               </tr>
               <tr>
                 <td>",measurew(),"</td>
-                <td>",as.character(data()$variable_type[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$variable_type_a[input$items_rows_selected]),"</td>
                 <td>",as.character(data()$mode_a[input$items_rows_selected]),"</td>
+                <td>",as.character(data()$module[input$items_rows_selected]),"</td>
                 <td>",as.character(data()$subsample[input$items_rows_selected]),"</td>
               </tr>
             </table>"
@@ -736,18 +737,19 @@ server <- function(input,output,session) {
         if(length(input$items_rows_selected) > 0){
             cat("<b>Grid text</b>
                     <br>
-                    <table style=\"width:90%\">
+                    <br>
+                    <table style=\"width:100%\">
                       <tr>
-                        <th>EN</th>
-                        <th>DE</th>
-                        <th>FR</th>
-                        <th>IT</th>
+                        <th style=\"width:25%\">EN</th>
+                        <th style=\"width:25%\">DE</th>
+                        <th style=\"width:25%\">FR</th>
+                        <th style=\"width:25%\">IT</th>
                       </tr>
               <tr>
-                <td>",as.character(data()$grid_text_e[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$grid_text_d[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$grid_text_f[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$grid_text_i[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$grid_text_e[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$grid_text_d[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$grid_text_f[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$grid_text_i[input$items_rows_selected]),"</td>
               </tr>
             </table>"
                 )
@@ -758,18 +760,19 @@ server <- function(input,output,session) {
         if(length(input$items_rows_selected) > 0){
             cat("<b>Item text</b>
                     <br>
-                    <table style=\"width:90%\">
+                    <br>
+                    <table style=\"width:100%\">
                       <tr>
-                        <th>EN</th>
-                        <th>DE</th>
-                        <th>FR</th>
-                        <th>IT</th>
+                        <th style=\"width:25%\">EN</th>
+                        <th style=\"width:25%\">DE</th>
+                        <th style=\"width:25%\">FR</th>
+                        <th style=\"width:25%\">IT</th>
                       </tr>
               <tr>
-                <td>",as.character(data()$item_text_e[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$item_text_d[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$item_text_f[input$items_rows_selected]),"</td>
-                <td>",as.character(data()$item_text_i[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$item_text_e[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$item_text_d[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$item_text_f[input$items_rows_selected]),"</td>
+                <td style=\"padding:10px\">",as.character(data()$item_text_i[input$items_rows_selected]),"</td>
               </tr>
             </table>"
             )            
