@@ -15,7 +15,7 @@ library(utf8)
 #install_github("shinyTree/shinyTree")
 
 x <- read.csv2(
-  "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_view_short_202101122256.csv", 
+  "C:/Users/treyz/OneDrive/Documents/tree2_metadata/data/suf_view_short_202101162241.csv", 
   sep=',', 
   header = T,
   encoding = "UTF-8")
@@ -59,7 +59,7 @@ for (l in theme1){
     }
     theme_list[[l]] <- u 
 }
-rm(u,v,w,z,e,l,n,r,k,m,p,t,d,h,i,j)
+rm(u,v,z,l,n,r,m,t,d,h,i)
 
 test <- x %>% filter(format == 2)
 

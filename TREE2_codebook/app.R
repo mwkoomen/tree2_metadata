@@ -98,6 +98,7 @@ for (l in theme1){
     }
     theme_list[[l]] <- u 
 }
+rm(u,v,z,l,n,r,m,t,d,h,i)
 themes <- tabdata %>% group_by(theme_l1, theme_l2, theme_l3, concept_text_long) %>% 
     tally() %>% 
     select(theme_l1, theme_l2, theme_l3, concept_text_long)
@@ -270,10 +271,12 @@ ui <- dashboardPage(
                 )
             ),
             tabItem(tabName = "themetree",
-                    htmlOutput("tt_intro"),
-                    br(),
-                    shinyTree("tree", wholerow = T, theme = "default", themeIcons = T, themeDots = T), 
-                    verbatimTextOutput("treeprint"),
+                    #htmlOutput("tt_intro"),
+                    #br(),
+                    box(title = 'Select a theme', status = "primary", height = "800", solidHeader = F, width=7,
+                        shinyTree("tree", wholerow = T, theme = "default", themeIcons = T, themeDots = T)),
+                    box(title = 'Select a variable', status = "primary", height = "800", solidHeader = F, width=5,
+                    verbatimTextOutput("treeprint")),
                     DTOutput("tree_data")
             ),
             tabItem(tabName = 'theme',
@@ -351,17 +354,12 @@ server <- function(input,output,session) {
         theme_list
     })
     output$treeprint <- renderPrint({
-        print(length(tree_a()[tree_a()==F]))
         print(tree_s())
     }) 
     tree_s <- reactive({
         req(input$tree)
         s <- unlist(get_selected(input$tree))
     })
-    tree_a <- reactive({
-        req(input$tree)
-        a <- grepl("TRUE",unlist(lapply(tree_s(), attributes)))
-    })    
     conceptd <- reactive({
         req(input$theme3_rows_selected)
         theme3d <- themes %>%
